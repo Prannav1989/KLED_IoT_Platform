@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Tuple
 import pickle
 from pathlib import Path
+import builtins
 
 # Configure structured logging
 logging.basicConfig(
@@ -273,7 +274,8 @@ class MessageDeduplicator:
                 path = Path(self.persistence_path)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 
-                with open(path, 'wb') as f:
+                import builtins
+                with builtins.open(path, 'wb') as f:
                     pickle.dump(state, f)
                 
                 logger.debug(f"💾 Saved deduplication state with {len(self.device_timestamps)} devices")
@@ -286,7 +288,7 @@ class MessageDeduplicator:
             return
         
         try:
-            with open(self.persistence_path, 'rb') as f:
+            with builtins.open(self.persistence_path, 'rb') as f:
                 state = pickle.load(f)
             
             # Only load if saved within last 24 hours

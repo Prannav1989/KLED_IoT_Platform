@@ -835,12 +835,7 @@ class MQTTClientManager:
         self.clients.clear()
         logger.info("All MQTT clients disconnected")
     
-    def __del__(self):
-        """Destructor to ensure clean shutdown"""
-        try:
-            self.disconnect_all()
-        except:
-            pass
+
 
 
 # Global singleton instance

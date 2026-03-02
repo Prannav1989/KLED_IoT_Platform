@@ -12,6 +12,7 @@ from flask_socketio import join_room, leave_room
 import asyncio
 import threading
 from sqlalchemy import desc, func, and_, or_
+from extensions import socketio
 
 
 alerts_bp = Blueprint("alerts", __name__, url_prefix="/alerts")

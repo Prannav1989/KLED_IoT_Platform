@@ -1,0 +1,587 @@
+:root {
+    /* IoT Dashboard Color Palette */
+    --iot-primary: #4a6fff;
+    --iot-secondary: #00d4aa;
+    --iot-accent: #ff6b8b;
+    --iot-dark: #1a2332;
+    --iot-light: #2d3748;
+    --iot-surface: #f8fafc;
+    --iot-text: #1e293b;
+    --iot-text-light: #64748b;
+    --iot-border: #e2e8f0;
+    
+    /* Dashboard specific variables */
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+    --gradient-primary: linear-gradient(135deg, var(--iot-primary), var(--iot-secondary));
+    --gradient-dark: linear-gradient(135deg, var(--iot-dark), #2d3748);
+}
+
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--iot-dark);
+    position: relative;
+    overflow: hidden;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(74, 111, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(0, 212, 170, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(255, 107, 139, 0.08) 0%, transparent 50%);
+}
+
+/* IoT Grid Pattern */
+.iot-grid {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridPulse 20s linear infinite;
+}
+
+@keyframes gridPulse {
+    0%, 100% {
+        opacity: 0.3;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* IoT Device Animations */
+.iot-device {
+    position: absolute;
+    z-index: 1;
+    animation: deviceFloat 8s ease-in-out infinite;
+}
+
+.device-1 {
+    width: 40px;
+    height: 40px;
+    top: 20%;
+    left: 15%;
+    background: rgba(74, 111, 255, 0.2);
+    border: 2px solid var(--iot-primary);
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(74, 111, 255, 0.4);
+    animation-delay: 0s;
+}
+
+.device-2 {
+    width: 30px;
+    height: 30px;
+    top: 60%;
+    right: 20%;
+    background: rgba(0, 212, 170, 0.2);
+    border: 2px solid var(--iot-secondary);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(0, 212, 170, 0.4);
+    animation-delay: 2s;
+}
+
+.device-3 {
+    width: 35px;
+    height: 35px;
+    bottom: 25%;
+    left: 25%;
+    background: rgba(255, 107, 139, 0.2);
+    border: 2px solid var(--iot-accent);
+    border-radius: 8px;
+    transform: rotate(45deg);
+    box-shadow: 0 0 25px rgba(255, 107, 139, 0.4);
+    animation-delay: 4s;
+}
+
+.device-4 {
+    width: 25px;
+    height: 25px;
+    top: 40%;
+    right: 30%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    animation-delay: 6s;
+}
+
+@keyframes deviceFloat {
+    0%, 100% {
+        transform: translateY(0) translateX(0);
+    }
+    25% {
+        transform: translateY(-20px) translateX(10px);
+    }
+    50% {
+        transform: translateY(-10px) translateX(-10px);
+    }
+    75% {
+        transform: translateY(-15px) translateX(15px);
+    }
+}
+
+/* Data Stream Lines */
+.data-stream {
+    position: absolute;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--iot-primary), transparent);
+    opacity: 0.3;
+    animation: dataFlow 3s linear infinite;
+}
+
+.stream-1 {
+    top: 30%;
+    left: 0;
+    width: 30%;
+    animation-delay: 0s;
+}
+
+.stream-2 {
+    top: 70%;
+    right: 0;
+    width: 25%;
+    animation-delay: 1s;
+}
+
+.stream-3 {
+    bottom: 40%;
+    left: 10%;
+    width: 20%;
+    animation-delay: 2s;
+}
+
+@keyframes dataFlow {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(1000%);
+        opacity: 0;
+    }
+}
+
+/* Login Card - IoT Dashboard Style */
+.login-card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    width: 100%;
+    max-width: 480px;
+    z-index: 2;
+    position: relative;
+    overflow: hidden;
+    animation: dashboardSlide 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes dashboardSlide {
+    from {
+        opacity: 0;
+        transform: translateY(60px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Dashboard Header Effect */
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: var(--gradient-primary);
+    background-size: 200% 100%;
+    animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.login-header {
+    padding: 2.5rem 2.5rem 1rem;
+    text-align: center;
+    position: relative;
+}
+
+.dashboard-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: var(--gradient-primary);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(74, 111, 255, 0.3);
+    animation: iconGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes iconGlow {
+    from {
+        box-shadow: 0 10px 30px rgba(74, 111, 255, 0.3);
+    }
+    to {
+        box-shadow: 0 15px 40px rgba(74, 111, 255, 0.5);
+    }
+}
+
+.dashboard-icon i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.login-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+}
+
+.login-header p {
+    color: var(--iot-text-light);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.login-body {
+    padding: 0 2.5rem 2.5rem;
+}
+
+/* IoT Style Form Controls */
+.login-form .form-group {
+    margin-bottom: 1.75rem;
+    position: relative;
+}
+
+.login-form .form-label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: var(--iot-text);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.login-form .input-group {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid var(--iot-border);
+    transition: all 0.3s ease;
+}
+
+.login-form .input-group:hover,
+.login-form .input-group:focus-within {
+    border-color: var(--iot-primary);
+    box-shadow: 0 0 0 3px rgba(74, 111, 255, 0.1);
+}
+
+.login-form .form-control {
+    padding: 1rem 1rem 1rem 3.5rem;
+    border: none;
+    background: white;
+    color: var(--iot-text);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.login-form .form-control::placeholder {
+    color: var(--iot-text-light);
+    opacity: 0.7;
+}
+
+.login-form .form-control:focus {
+    outline: none;
+    background: white;
+}
+
+.login-form .input-group-prepend {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    color: var(--iot-primary);
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.login-form .input-group:hover .input-group-prepend {
+    color: var(--iot-secondary);
+}
+
+/* IoT Dashboard Button */
+.btn-login {
+    width: 100%;
+    padding: 1rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+    border-radius: 12px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(74, 111, 255, 0.3);
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.btn-login::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.7s ease;
+}
+
+.btn-login:hover::before {
+    left: 100%;
+}
+
+.btn-login:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 40px rgba(74, 111, 255, 0.4);
+}
+
+.btn-login:active {
+    transform: translateY(-1px);
+    transition: all 0.1s ease;
+}
+
+/* Checkbox IoT Style */
+.form-check {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.form-check-input {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border: 2px solid var(--iot-border);
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.form-check-input:checked {
+    background-color: var(--iot-primary);
+    border-color: var(--iot-primary);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='white' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+
+.form-check-label {
+    color: var(--iot-text);
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+/* Links */
+.forgot-password {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--iot-primary);
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.forgot-password:hover {
+    color: var(--iot-secondary);
+    text-decoration: none;
+    transform: translateX(5px);
+}
+
+/* Footer */
+.login-footer {
+    padding: 1.75rem 2.5rem;
+    text-align: center;
+    background: rgba(248, 250, 252, 0.8);
+    border-top: 1px solid var(--iot-border);
+}
+
+.register-link {
+    color: var(--iot-text-light);
+    font-size: 0.95rem;
+}
+
+.register-link a {
+    color: var(--iot-primary);
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 5px;
+    transition: all 0.3s ease;
+}
+
+.register-link a:hover {
+    color: var(--iot-secondary);
+    text-decoration: underline;
+}
+
+/* Status Indicator */
+.status-indicator {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--iot-text-light);
+    font-size: 0.85rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--iot-secondary);
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+    }
+}
+
+/* Dropdown Animation Enhancement */
+.dropdown-menu {
+    animation: dropdownSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 0.5rem;
+    background: white;
+    border: 1px solid var(--iot-border);
+}
+
+@keyframes dropdownSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: var(--iot-text);
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background: rgba(74, 111, 255, 0.1);
+    color: var(--iot-primary);
+    transform: translateX(5px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .login-container {
+        padding: 1rem;
+    }
+    
+    .login-card {
+        max-width: 100%;
+        margin: 1rem;
+    }
+    
+    .login-header {
+        padding: 2rem 1.5rem 0.5rem;
+    }
+    
+    .login-body {
+        padding: 0 1.5rem 1.5rem;
+    }
+    
+    .login-footer {
+        padding: 1.5rem;
+    }
+    
+    .iot-device,
+    .data-stream {
+        display: none; /* Hide animations on mobile for performance */
+    }
+}
+
+@media (max-width: 480px) {
+    .login-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .dashboard-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .dashboard-icon i {
+        font-size: 2rem;
+    }
+    
+    .status-indicator {
+        top: 20px;
+        right: 20px;
+    }
+}
+
+/* Loading Animation */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,299 @@
+{% extends "superadmin_dashboard/base.html" %}
+
+{% block title %}Device Management - Super Admin{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title">
+            <i class="fas fa-server me-2"></i>Device Management
+        </h2>
+        <div>
+            <a href="{{ url_for('superadmin.add_device_form') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Add New Device
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="stat-icon text-primary">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="stat-number">{{ stats.total_devices }}</div>
+                    <div class="stat-label">Total Devices</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="stat-icon text-success">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <div class="stat-number">{{ stats.active_devices }}</div>
+                    <div class="stat-label">Active Devices</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="stat-icon text-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-number">{{ stats.non_active_devices }}</div>
+                    <div class="stat-label">Non-Active Devices</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="stat-icon text-info">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-number">{{ stats.total_sensor_data }}</div>
+                    <div class="stat-label">Total Data Points</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Devices Table Card -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>All Devices
+            </h5>
+            <div class="d-flex">
+                <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search devices..." style="width: 200px;">
+            </div>
+        </div>
+        <div class="card-body">
+            {% if devices %}
+                <div class="table-responsive">
+                    <table class="table table-hover" id="devicesTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Device Name</th>
+                                <th>Device ID</th>
+                                <th>Owner</th>
+                                <th>Company</th>
+                                <th>Status</th>
+                                <th>Parameters</th>
+                                <th>Sensor Model</th>
+                                <th>Last Seen</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device_data in devices %}
+                                {% set device = device_data[0] %}
+                                {% set status = calculate_device_status_global(device) %}
+                                <tr>
+                                    <td>{{ device.id }}</td>
+                                    <td>
+                                        <i class="fas fa-microchip device-icon"></i>
+                                        <strong>{{ device.name }}</strong>
+                                        {% if device.description %}
+                                            <br>
+                                            <small class="text-muted">{{ device.description[:50] }}{% if device.description|length > 50 %}...{% endif %}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <code>{{ device.device_id }}</code>
+                                        {% if device.mqtt_topic %}
+                                            <br>
+                                            <small class="text-muted">Topic: {{ device.mqtt_topic }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ device_data.owner or 'N/A' }}</td>
+                                    <td>{{ device_data.company_name or 'N/A' }}</td>
+                                    <td>
+                                        {% if status == 'online' %}
+                                            <span class="status-badge status-online">
+                                                <i class="fas fa-circle me-1"></i> Online
+                                            </span>
+                                        {% elif status == 'offline' %}
+                                            <span class="status-badge status-offline">
+                                                <i class="fas fa-circle me-1"></i> Offline
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge status-inactive">
+                                                <i class="fas fa-circle me-1"></i> Inactive
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if device_data.parameter_count > 0 %}
+                                            <span class="badge bg-info">{{ device_data.parameter_count }}</span>
+                                            {% if device_data.data_count > 0 %}
+                                                <br>
+                                                <small class="text-muted">{{ device_data.data_count }} readings</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if device_data.sensor_model_name %}
+                                            <span class="badge bg-primary">{{ device_data.sensor_model_name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">None</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if device.last_seen %}
+                                            {{ device.last_seen.strftime('%Y-%m-%d %H:%M') }}
+                                            {% set time_diff = (now - device.last_seen).total_seconds() %}
+                                            {% if time_diff > 86400 %}
+                                                <br>
+                                                <small class="text-warning">{{ (time_diff / 86400)|int }} days ago</small>
+                                            {% elif time_diff > 3600 %}
+                                                <br>
+                                                <small class="text-warning">{{ (time_diff / 3600)|int }} hours ago</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="action-buttons">
+                                        <a href="{{ url_for('superadmin.edit_device', id=device.id) }}" 
+                                           class="btn btn-sm btn-warning" 
+                                           title="Edit Device">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-danger delete-device-btn" 
+                                                data-device-id="{{ device.id }}" 
+                                                data-device-name="{{ device.name }}"
+                                                title="Delete Device">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <a href="#" 
+                                           class="btn btn-sm btn-info" 
+                                           title="View Data">
+                                            <i class="fas fa-chart-line"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="no-data">
+                    <i class="fas fa-server"></i>
+                    <h5>No Devices Found</h5>
+                    <p class="text-muted">There are no devices in the system yet.</p>
+                    <a href="{{ url_for('superadmin.add_device_form') }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-plus me-1"></i> Add Your First Device
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block modals %}
+    <!-- Delete Device Modal -->
+    <div class="modal fade" id="deleteDeviceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Device Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete device <strong id="device-name-to-delete"></strong>?</p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> This action will permanently delete the device and all associated sensor data. This cannot be undone.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteDeviceForm" method="POST" action="">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i> Delete Device
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable if devices exist
+            {% if devices %}
+                $('#devicesTable').DataTable({
+                    "pageLength": 25,
+                    "order": [[0, 'desc']],
+                    "language": {
+                        "search": "Search:",
+                        "lengthMenu": "Show _MENU_ entries",
+                        "info": "Showing _START_ to _END_ of _TOTAL_ devices",
+                        "paginate": {
+                            "previous": "<i class='fas fa-chevron-left'></i>",
+                            "next": "<i class='fas fa-chevron-right'></i>"
+                        }
+                    }
+                });
+            {% endif %}
+
+            // Delete device confirmation
+            $('.delete-device-btn').click(function() {
+                const deviceId = $(this).data('device-id');
+                const deviceName = $(this).data('device-name');
+                
+                $('#device-name-to-delete').text(deviceName);
+                $('#deleteDeviceForm').attr('action', '/superadmin/devices/' + deviceId + '/delete');
+                
+                const modal = new bootstrap.Modal(document.getElementById('deleteDeviceModal'));
+                modal.show();
+            });
+
+            // Search functionality
+            $('#searchInput').on('keyup', function() {
+                const value = $(this).val().toLowerCase();
+                $('#devicesTable tbody tr').filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+
+            // Update device status indicators
+            function updateDeviceStatus() {
+                $('.status-badge').each(function() {
+                    const badge = $(this);
+                    const statusText = badge.text().toLowerCase().trim();
+                    
+                    // Remove all status classes
+                    badge.removeClass('status-online status-offline status-inactive');
+                    
+                    // Add appropriate class based on status text
+                    if (statusText.includes('online')) {
+                        badge.addClass('status-online');
+                    } else if (statusText.includes('offline')) {
+                        badge.addClass('status-offline');
+                    } else {
+                        badge.addClass('status-inactive');
+                    }
+                });
+            }
+
+            // Update status on page load
+            updateDeviceStatus();
+            
+            // Update status every 30 seconds
+            setInterval(updateDeviceStatus, 30000);
+        });
+    </script>
+{% endblock %}

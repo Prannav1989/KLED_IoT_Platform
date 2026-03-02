@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}{{ dashboard.name }} - IoT Dashboard{% endblock %}
+{% block content %}
+{% include "dashboard/header.html" %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>{{ dashboard.name }} - Analytics</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- jQuery for easier DOM manipulation -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <!-- Analytics Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="dashboard-info">
+                    <h1>{{ dashboard.name }} - Analytics</h1>
+                    <p>Comprehensive sensor monitoring and analysis</p>
+                </div>
+
+                <div class="time-range-selector">
+                    <button class="time-btn active" data-range="24h" aria-label="View 24 hours data">
+                        24H
+                    </button>
+                    <button class="time-btn" data-range="7d" aria-label="View 7 days data">
+                        7D
+                    </button>
+                    <button class="time-btn" data-range="30d" aria-label="View 30 days data">
+                        30D
+                    </button>
+                    <button class="time-btn" data-range="custom" aria-label="Custom date range">
+                        <i class="fas fa-calendar-alt"></i> Custom
+                    </button>
+                </div>
+            </div>
+
+            <div class="custom-date-range" id="custom-range-panel" style="display: none;">
+                <input type="date" id="start-date" placeholder="Start Date">
+                <span>to</span>
+                <input type="date" id="end-date" placeholder="End Date">
+                <button id="apply-custom-range">Apply</button>
+                <button id="cancel-custom-range" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content container">
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #e8f1ff; color: var(--primary-color);">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="total-devices">{{ total_devices }}</h3>
+                    <p>Total Sensors</p>
+
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #d1f7e5; color: var(--success-color);">
+                    <i class="fas fa-signal"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="active-devices">{{ active_devices }}</h3>
+                    <p>Active Now</p>
+
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #e8f6ff; color: var(--info-color);">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="total-parameters">{{ total_parameters }}</h3>
+                    <p>Parameters</p>
+                    <div class="stat-trend">
+                        <span id="parameter-types">{{ total_parameters }} types</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fff8e6; color: var(--warning-color);">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="data-rate">0</h3>
+                    <p>Data Points/Min</p>
+                    <div class="stat-trend">
+                        <span id="data-volume">0 GB total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Filters -->
+        <section class="advanced-filters" id="advanced-filters" style="display: none;">
+            <h3><i class="fas fa-filter"></i> Advanced Filters</h3>
+
+            <div class="filter-group">
+                <div class="filter-option">
+                    <label><i class="fas fa-sensor"></i> Parameter Type:</label>
+                    <select class="multi-select" id="parameter-type-filter" multiple>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="filter-option">
+                    <label><i class="fas fa-ruler"></i> Device Status:</label>
+                    <select id="status-filter">
+                        <option value="all">All Status</option>
+                        <option value="online">Online Only</option>
+                        <option value="offline">Offline Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button class="btn-primary" id="apply-filters">
+                    <i class="fas fa-check"></i> Apply Filters
+                </button>
+                <button class="btn-secondary" id="clear-filters">
+                    <i class="fas fa-times"></i> Clear All
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Chart -->
+        <section class="chart-container">
+            <div class="chart-header">
+                <h2><i class="fas fa-chart-line"></i> Parameter Trends</h2>
+                <div class="chart-controls">
+                    <select id="chart-parameter-select">
+                        <option value="all">All Parameters</option>
+                    </select>
+                    <button class="export-btn" id="export-chart">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            <canvas id="main-chart"></canvas>
+        </section>
+
+        <!-- Data View Toggle -->
+        <div class="view-toggle">
+            <button class="view-toggle-btn active" data-view="table" id="view-table">
+                <i class="fas fa-table"></i> Table View
+            </button>
+            <button class="view-toggle-btn" data-view="cards" id="view-cards">
+                <i class="fas fa-th-large"></i> Card View
+            </button>
+            <button class="view-toggle-btn" data-view="groups" id="view-groups">
+                <i class="fas fa-layer-group"></i> Group View
+            </button>
+        </div>
+
+        <!-- Sensor Data Table View (Default) -->
+        <section class="data-section" id="table-view">
+            <div class="section-header">
+                <h2><i class="fas fa-table"></i> Sensor Data Overview</h2>
+                <div class="export-controls">
+                    <input type="text" class="search-box" id="sensor-search"
+                        placeholder="Search sensors, parameters...">
+                    <button class="export-btn" id="export-data">
+                        <i class="fas fa-file-export"></i> Export CSV
+                    </button>
+                    <button class="btn-primary" id="refresh-data">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="sensor-table" id="sensor-data-table">
+                    <thead>
+                        <tr>
+                            <th style="width:220px;">Sensor Device</th>
+                            <th>Parameter</th>
+                            <th>Value</th>
+                            <th>Unit</th>
+                            <th>Last Update</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+
+                    <tbody id="sensor-table-body">
+                        <!-- Table rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+                <div class="table-info">
+                    Showing <span id="visible-sensors">0</span> of <span id="total-sensors">0</span> sensors
+                </div>
+                <div class="pagination" id="table-pagination">
+                    <!-- Pagination will be added here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Sensor Cards View (Hidden by default) -->
+        <section class="data-section" id="cards-view" style="display: none;">
+            <div class="section-header">
+                <h2><i class="fas fa-th-large"></i> Sensor Cards View</h2>
+                <div class="view-controls">
+                    <select id="cards-per-page">
+                        <option value="6">6 per page</option>
+                        <option value="12" selected>12 per page</option>
+                        <option value="24">24 per page</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="cards-container" id="sensor-cards-container">
+                <!-- Sensor cards will be populated here -->
+            </div>
+
+            <div class="pagination" id="cards-pagination">
+                <!-- Pagination will be added here -->
+            </div>
+        </section>
+
+        <!-- Parameter Groups View (Hidden by default) -->
+        <section class="data-section" id="groups-view" style="display: none;">
+            <div class="section-header">
+                <h2><i class="fas fa-layer-group"></i> Parameter Groups</h2>
+                <div class="group-controls">
+                    <select id="group-by">
+                        <option value="parameter">Group by Parameter Type</option>
+                        <option value="device">Group by Device</option>
+                        <option value="status">Group by Status</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="parameter-groups" id="parameter-groups">
+                <!-- Parameter groups will be populated here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Sensor Detail Modal -->
+    <div class="modal" id="sensor-modal" style="display: none;">
+        <div class="modal-content modal-lg">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <div id="modal-content">
+                <!-- Sensor details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set global dashboard ID from template variable
+        window.dashboardId = {{ dashboard.id }};
+    </script>
+    <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+
+</body>
+
+</html>
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Alert Events{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-exclamation-triangle me-2 text-danger"></i>Alert Events
+            </h1>
+            <p class="text-muted mb-0">History of all triggered alert rules</p>
+        </div>
+        <div>
+            <!-- Filter dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                        id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-filter me-1"></i>Filter
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                    <li><a class="dropdown-item" href="{{ url_for('alerts.events') }}">All Events</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('alerts.events', device_id='1') }}">Device 1</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('alerts.events', rule_id='1') }}">Rule 1</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Total Events</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ events|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bell fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Recent Alert Events</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Device</th>
+                            <th>Rule</th>
+                            <th>Parameter</th>
+                            <th>Value</th>
+                            <th>Threshold</th>
+                            <th>Status</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in events %}
+                        <tr>
+                            <td>
+                                <small class="text-muted">{{ e.timestamp|datetime_format if e.timestamp else e.triggered_at }}</small>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ e.device_name or 'Unknown' }}</strong>
+                                    <div class="text-muted small">ID: {{ e.device_id }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ e.rule_name or 'Unknown Rule' }}</strong>
+                                    {% if e.rule_id %}
+                                    <div class="text-muted small">Rule #{{ e.rule_id }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ e.parameter_type or e.metric or 'N/A' }}</span>
+                                {% if e.unit %}
+                                <div class="text-muted small">{{ e.unit }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="fw-bold text-danger">
+                                    {{ e.actual_value or e.trigger_value or 'N/A' }}
+                                    {% if e.unit %}{{ e.unit }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <code class="bg-light p-1 rounded">
+                                    {{ e.operator or '>' }} {{ e.threshold or 'N/A' }}
+                                    {% if e.unit %}{{ e.unit }}{% endif %}
+                                </code>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">{{ e.status or 'TRIGGERED' }}</span>
+                            </td>
+                            <td>
+                                {% if e.severity == 'critical' %}
+                                <span class="badge bg-danger">CRITICAL</span>
+                                {% elif e.severity == 'warning' %}
+                                <span class="badge bg-warning">WARNING</span>
+                                {% elif e.severity == 'info' %}
+                                <span class="badge bg-info">INFO</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ e.severity|upper }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                                <h5>No Alert Events</h5>
+                                <p class="text-muted">No alerts have been triggered yet.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if pagination %}
+            <nav aria-label="Events pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pagination.prev_num }}{% if rule_id %}&rule_id={{ rule_id }}{% endif %}{% if device_id %}&device_id={{ device_id }}{% endif %}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page in pagination.iter_pages() %}
+                        {% if page %}
+                            <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="?page={{ page }}{% if rule_id %}&rule_id={{ rule_id }}{% endif %}{% if device_id %}&device_id={{ device_id }}{% endif %}">
+                                    {{ page }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pagination.next_num }}{% if rule_id %}&rule_id={{ rule_id }}{% endif %}{% if device_id %}&device_id={{ device_id }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add any JavaScript for filtering or interactions here
+document.addEventListener('DOMContentLoaded', function() {
+    // Example: Add click to view rule details
+    document.querySelectorAll('tbody tr').forEach(row => {
+        row.addEventListener('click', function() {
+            const ruleId = this.querySelector('.rule-id')?.textContent.match(/#(\d+)/)?.[1];
+            if (ruleId) {
+                window.location.href = `/alerts/rules?highlight=${ruleId}`;
+            }
+        });
+    });
+});
+</script>
+
+<style>
+tbody tr:hover {
+    cursor: pointer;
+    background-color: rgba(255, 0, 0, 0.05);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ device.name }} - Device Details{% endblock %}
+
+{% block content %}
+<style>
+    /* ===== Minimal Glass CSS ===== */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(10px);
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        border-radius: 20px;
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- ================= HEADER ================= -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <!-- LEFT -->
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ url_for('dashboard_device.device_list', dashboard_id=dashboard_id) }}"
+               class="btn btn-outline-secondary btn-sm back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back
+            </a>
+
+            <div>
+                <h4 class="mb-1">{{ device.name }}</h4>
+                <small class="text-muted">Device ID: {{ device.id }}</small>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <span class="badge status-badge 
+            {% if computed_status == 'online' %}bg-success
+            {% else %}bg-danger{% endif %}">
+            <i class="fa-solid fa-circle me-1"></i>
+            {{ computed_status | upper }}
+        </span>
+    </div>
+
+    <!-- ================= INFO CARDS ================= -->
+    <div class="row mb-4">
+
+        <!-- CREATED DATE -->
+        <div class="col-md-4 mb-3">
+            <div class="card glass-card h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Created Date</h6>
+                    <h5 class="mb-0">
+                        {{ device.created_at.strftime('%d %b %Y, %H:%M') if device.created_at else 'N/A' }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- ASSIGNED TO -->
+        <div class="col-md-4 mb-3">
+            <div class="card glass-card h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Assigned To</h6>
+
+                    {% if device.assigned_users %}
+                        {% for user in device.assigned_users %}
+                            <span class="badge bg-primary me-1 mb-1">
+                                {{ user.username }}
+                            </span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="text-muted">Not Assigned</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- LAST SEEN -->
+        <div class="col-md-4 mb-3">
+            <div class="card glass-card h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Last Seen</h6>
+                    <h5 class="mb-0">
+                        {% if last_reading_time %}
+                            {{ last_reading_time.strftime('%d %b %Y, %H:%M:%S') }}
+                        {% else %}
+                            No data yet
+                        {% endif %}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= RULES / THRESHOLDS ================= -->
+    <div class="card glass-card">
+        <div class="card-body text-center py-5">
+            <i class="fa-solid fa-sliders fa-2x text-muted mb-3"></i>
+            <h5 class="mb-2">Rules & Thresholds</h5>
+            <p class="text-muted mb-0">
+                This section is coming soon 🚧<br>
+                You will be able to configure alerts and limits for this device.
+            </p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "superadmin_dashboard/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-building me-2"></i>
+                Companies
+            </h2>
+        </div>
+    </div>
+
+    <!-- Companies Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+
+                    {% if companies %}
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Company Name</th>
+                                        <th>Created At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for company in companies %}
+                                        <tr>
+                                            <td>{{ company.id }}</td>
+                                            <td>
+                                                <strong>{{ company.name }}</strong>
+                                            </td>
+                                            <td>
+                                                {{ company.created_at.strftime('%Y-%m-%d')
+                                                   if company.created_at else '-' }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No companies found</p>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

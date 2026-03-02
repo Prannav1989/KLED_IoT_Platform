@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}Company Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-building"></i> 
+                    Company Management
+                </h2>
+                {% if current_user.role == 'super_admin' %}
+                <a href="{{ url_for('company.create_company') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Create New Company
+                </a>
+                {% endif %}
+            </div>
+            <p class="text-muted">Manage all companies, their admins, and view statistics</p>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Companies</h6>
+                            <h2 class="mb-0">{{ companies|length }}</h2>
+                        </div>
+                        <i class="fas fa-building fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Users</h6>
+                            <h2 class="mb-0">{{ total_users }}</h2>
+                        </div>
+                        <i class="fas fa-users fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Devices</h6>
+                            <h2 class="mb-0">{{ total_devices }}</h2>
+                        </div>
+                        <i class="fas fa-microchip fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Dashboards</h6>
+                            <h2 class="mb-0">{{ total_dashboards }}</h2>
+                        </div>
+                        <i class="fas fa-chart-line fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    {% if current_user.role == 'super_admin' %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('company.list_companies') }}" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-list"></i> View All Companies
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('company.create_company') }}" class="btn btn-outline-success w-100 mb-2">
+                                <i class="fas fa-plus-circle"></i> Create Company
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-info w-100 mb-2">
+                                <i class="fas fa-users-cog"></i> Manage Users
+                            </a>
+                        </div>
+<div class="col-md-3">
+    <button class="btn btn-outline-warning w-100 mb-2" disabled>
+        <i class="fas fa-microchip"></i> Manage Devices (Coming Soon)
+    </button>
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Companies List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-building"></i> All Companies
+                        </h5>
+                        <div class="input-group w-auto">
+                            <input type="text" class="form-control form-control-sm" id="companySearch" 
+                                   placeholder="Search companies..." onkeyup="searchCompanies()">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if companies %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="companiesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Company Name</th>
+                                    <th>Users</th>
+                                    <th>Devices</th>
+                                    <th>Dashboards</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for company in companies %}
+                                <tr class="company-row">
+                                    <td><span class="badge bg-secondary">#{{ company.id }}</span></td>
+                                    <td>
+                                        <strong>{{ company.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-users"></i> {{ company_users[company.id] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-microchip"></i> {{ company_devices[company.id] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-chart-line"></i> {{ company_dashboards[company.id] }}
+                                        </span>
+                                    </td>
+                                    <td>{{ company.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('company.view_company', company_id=company.id) }}" 
+                                               class="btn btn-sm btn-info" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if current_user.role == 'super_admin' %}
+                                            <a href="{{ url_for('company.edit_company', company_id=company.id) }}" 
+                                               class="btn btn-sm btn-warning" title="Edit Company">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger" 
+                                                    onclick="confirmDelete({{ company.id }}, '{{ company.name }}')"
+                                                    title="Delete Company">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            <a href="{{ url_for('company.manage_admins', company_id=company.id) }}" 
+                                               class="btn btn-sm btn-primary" title="Manage Admins">
+                                                <i class="fas fa-user-shield"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        No companies found. {% if current_user.role == 'super_admin' %}
+                        <a href="{{ url_for('company.create_company') }}">Create your first company</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i> Recently Created Companies
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_companies %}
+                    <ul class="list-group">
+                        {% for company in recent_companies %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-building text-primary"></i>
+                                <strong>{{ company.name }}</strong>
+                            </div>
+                            <small class="text-muted">{{ company.created_at.strftime('%Y-%m-%d') }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted mb-0">No recent companies</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie"></i> Company Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="companyStatsChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> 
+                    Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete company: <strong id="deleteCompanyName"></strong>?</p>
+                <p class="text-danger">
+                    <i class="fas fa-warning"></i> 
+                    This will also delete all users, devices, and dashboards associated with this company!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="deleteConfirmBtn" class="btn btn-danger">Delete Company</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+// Search functionality
+function searchCompanies() {
+    let input = document.getElementById('companySearch');
+    let filter = input.value.toUpperCase();
+    let rows = document.getElementsByClassName('company-row');
+    
+    for (let i = 0; i < rows.length; i++) {
+        let companyName = rows[i].getElementsByTagName('td')[1];
+        if (companyName) {
+            let textValue = companyName.textContent || companyName.innerText;
+            if (textValue.toUpperCase().indexOf(filter) > -1) {
+                rows[i].style.display = '';
+            } else {
+                rows[i].style.display = 'none';
+            }
+        }
+    }
+}
+
+// Delete confirmation
+function confirmDelete(companyId, companyName) {
+    document.getElementById('deleteCompanyName').textContent = companyName;
+    document.getElementById('deleteConfirmBtn').href = "{{ url_for('company.delete_company', company_id=0) }}".replace('0', companyId);
+    
+    let deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Chart.js for statistics (if Chart.js is included in your base template)
+document.addEventListener('DOMContentLoaded', function() {
+    {% if companies %}
+    // Prepare data for chart
+    let companyNames = [{% for company in companies %}'{{ company.name }}',{% endfor %}];
+    let userCounts = [{% for company in companies %}{{ company_users[company.id] }},{% endfor %}];
+    let deviceCounts = [{% for company in companies %}{{ company_devices[company.id] }},{% endfor %}];
+    
+    // Only create chart if we have companies and Chart is available
+    if (typeof Chart !== 'undefined' && companyNames.length > 0) {
+        let ctx = document.getElementById('companyStatsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: companyNames.slice(0, 5), // Show only first 5 companies
+                datasets: [{
+                    label: 'Users',
+                    data: userCounts.slice(0, 5),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Devices',
+                    data: deviceCounts.slice(0, 5),
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        stepSize: 1
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}
+{% endblock %}

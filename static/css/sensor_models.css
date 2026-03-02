@@ -1,0 +1,126 @@
+/* Parameter display styles */
+pre.parameters {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow: auto;
+  font-size: 0.85rem;
+  background-color: #f8f9fa;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.table-fixed {
+  table-layout: fixed;
+}
+
+.param-table input {
+  width: 100%;
+}
+
+.parameter-preview .badge {
+  margin: 2px;
+}
+
+.clickable-row:hover {
+  background-color: #f5f5f5;
+  cursor: pointer;
+}
+
+/* Fix for modal checkboxes */
+#paramLibraryModal .form-check-input {
+  margin: 0;
+  position: relative;
+  top: 2px;
+}
+
+/* Ensure modal content is visible */
+#paramLibraryModal .modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Fix for table inside modal */
+#paramLibraryModal .table-responsive {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Style for selected rows */
+.param-selected {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+/* Highlight for newly inserted rows */
+.param-newly-inserted {
+  background-color: #e8f5e8 !important;
+  transition: background-color 2s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-dialog.modal-xl {
+    margin: 10px;
+    max-width: calc(100% - 20px);
+  }
+
+  .table-responsive {
+    font-size: 0.9rem;
+  }
+
+  .btn-sm {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.75rem;
+  }
+
+  .card .fs-4 {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Loading spinner */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
+  display: none;
+}
+
+.loading-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Form validation styles */
+.was-validated .form-control:invalid {
+  border-color: #dc3545;
+}
+
+.was-validated .form-control:valid {
+  border-color: #198754;
+}
+
+/* Parameter table styles */
+.param-table td {
+  vertical-align: middle;
+}
+
+.param-table input.form-control-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Library table styles */
+#param-library-table tbody tr {
+  cursor: pointer;
+}
+
+#param-library-table tbody tr:hover {
+  background-color: #f8f9fa;
+}

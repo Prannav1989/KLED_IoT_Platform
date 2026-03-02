@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Kled Dashboard</title>
+    <link rel="icon" type="image/x-icon"
+          href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- Custom Base CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="fas fa-microchip me-2"></i>Ked IoT Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                    <!-- Main Dashboard link (keeping original) -->
+                    <li class="nav-item">
+                        {% if current_user.role == 'super_admin' %}
+                        <a class="nav-link" href="{{ url_for('superadmin.dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                        {% elif current_user.role == 'admin' %}
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                        {% else %}
+                        <a class="nav-link" href="{{ url_for('user.dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                        {% endif %}
+                    </li>
+
+                    <!-- NEW: Sensor Dashboards dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarSensorDashboards" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-chart-bar me-1"></i>Sensor Dashboards
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarSensorDashboards">
+                            {% if current_user.role == 'super_admin' %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('dashboard.dashboard_list') }}">
+                                    <i class="fas fa-cogs me-1"></i>Manage All Dashboards
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('dashboard.create_dashboard') }}">
+                                    <i class="fas fa-plus me-1"></i>Create Dashboard
+                                </a>
+                            </li>
+                            {% elif current_user.role == 'super_admin' %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('dashboard.dashboard_list') }}">
+                                    <i class="fas fa-cogs me-1"></i>Manage Dashboards
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('dashboard.create_dashboard') }}">
+                                    <i class="fas fa-plus me-1"></i>Create Dashboard
+                                </a>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('dashboard.dashboard_list') }}">
+                                    <i class="fas fa-eye me-1"></i>View My Dashboards
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </li>
+
+                    <!-- Devices menu item (keeping original) -->
+                    {% if dashboard %}
+                    <a class="nav-link" href="{{ url_for('dashboard_device.device_list', dashboard_id=dashboard.id) }}">
+                        Devices
+                    </a>
+                    {% else %}
+                    <a class="nav-link disabled" href="#">Devices</a>
+                    {% endif %}
+
+
+          
+                    {% if current_user.role in ['admin', 'super_admin'] %}
+                    <!-- <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('sensor.dashboard') }}">
+                            <i class="fas fa-chart-line me-1"></i>Sensor Dashboard
+                        </a>
+                    </li> -->
+                    {% endif %}
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                    <!-- Admin-specific menu items (keeping original structure) -->
+                    {% if current_user.role in ['admin', 'super_admin'] %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarAdminDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarAdminDropdown">
+                            {% if current_user.role == 'super_admin' %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('superadmin.manage_users') }}">
+                                    <i class="fas fa-users me-1"></i>Manage Users
+                                </a>
+                            </li>
+                            {% endif %}
+<!-- 
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('admin.add_device') }}">
+                                    <i class="fas fa-plus-circle me-1"></i>Add Device
+                                </a>
+                            </li> -->
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('admin.manage_devices') }}">
+                                    <i class="fas fa-microchip me-1"></i>Manage All Devices
+                                </a>
+                            </li>
+                            <!-- <li>
+                                <a class="dropdown-item" href="{{ url_for('admin.mqtt_configs') }}">
+                                    <i class="fas fa-broadcast-tower me-1"></i>MQTT Configurations
+                                </a>
+                            </li> -->
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    <!-- User profile dropdown (keeping original structure) -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarUserDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-1"></i>{{ current_user.username }} ({{ current_user.role }})
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUserDropdown">
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-id-card me-1"></i>Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cog me-1"></i>Settings
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    {% else %}
+                    <!-- Menu items for non-authenticated users (keeping original) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.register') }}">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show"
+            role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ================= GLOBAL TOAST HELPER ================= -->
+    <script>
+    function showToast(message, type = "info") {
+        console.log("🎯 showToast called:", {message: typeof message === 'string' ? message.substring(0, 50) + "..." : message, type: type});
+        
+        let toastContainer = document.getElementById("toastContainer");
+        if (!toastContainer) {
+            toastContainer = document.createElement("div");
+            toastContainer.id = "toastContainer";
+            toastContainer.className = "toast-container position-fixed top-0 end-0 p-3";
+            document.body.appendChild(toastContainer);
+        }
+
+        const toastId = "toast-" + Date.now();
+        toastContainer.insertAdjacentHTML("beforeend", `
+            <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button"
+                            class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+
+        const toastEl = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastEl, { 
+            delay: 5000,
+            animation: true,
+            autohide: true
+        });
+        toast.show();
+
+        toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+    }
+    </script>
+
+<!-- ================= SOCKET.IO ALERT SYSTEM ================= -->
+<!-- ================= UPDATED SOCKET.IO ALERT SYSTEM ================= -->
+<script>
+(function () {
+    console.log("🔌 Initializing Socket.IO Alert System v3...");
+
+    // Check if user is authenticated
+    {% if current_user and current_user.is_authenticated %}
+    const USER_ID = {{ current_user.id }};
+    const USERNAME = {{ current_user.username | tojson }};
+    console.log("✅ User:", USERNAME, "(ID:", USER_ID, ")");
+    {% else %}
+    console.log("ℹ️ No authenticated user – alerts disabled");
+    return;
+    {% endif %}
+
+    // --------------------------------------------------
+    // Socket.IO connection
+    // --------------------------------------------------
+    const socket = io({
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000
+    });
+
+    // Expose globally (for debugging)
+    window.socket = socket;
+    window.currentUserId = USER_ID;
+
+    // --------------------------------------------------
+    // Audio unlock (browser autoplay rule)
+    // --------------------------------------------------
+    let audioUnlocked = false;
+    document.addEventListener("click", unlockAudioOnce, { once: true });
+
+    function unlockAudioOnce() {
+        audioUnlocked = true;
+        console.log("🔊 Audio unlocked by user interaction");
+    }
+
+    // --------------------------------------------------
+    // CONNECTION EVENTS
+    // --------------------------------------------------
+    socket.on("connect", () => {
+        console.log("✅ Socket.IO Connected! ID:", socket.id);
+
+        // Join alert room
+        socket.emit("join_room", {
+            user_id: USER_ID,
+            room_type: "alerts"
+        });
+    });
+
+    socket.on("connection_status", (data) => {
+        console.log("📡 Connection status:", data.status);
+    });
+
+    socket.on("disconnect", (reason) => {
+        console.warn("⚠️ Socket disconnected:", reason);
+    });
+
+    socket.on("connect_error", (error) => {
+        console.error("❌ Socket connection error:", error);
+        showToast("Alert connection error", "warning");
+    });
+
+    socket.on("room_joined", (data) => {
+        console.log("✅ Joined room:", data.room);
+        if (data.success) {
+            console.log("🎯 Ready to receive alerts!");
+        }
+    });
+
+    // --------------------------------------------------
+    // UNIVERSAL ALERT HANDLER (WORKS FOR BOTH EVENTS)
+    // --------------------------------------------------
+    function handleAnyAlert(data, eventName) {
+        console.log(`🎯 ${eventName} EVENT RECEIVED:`, data);
+
+        // --------------------------------------------------
+        // 1. EXTRACT DATA (DEFENSIVE)
+        // --------------------------------------------------
+        // Extract title - try multiple possible field names
+        let title = data?.title || 
+                   data?.rule_name || 
+                   data?.name ||
+                   `Alert: ${data?.parameter || data?.parameter_type || data?.metric || 'Unknown'}`;
+        
+        // Extract message - try multiple possible field names
+        let message = data?.message || 
+                     data?.description ||
+                     (data?.parameter_type ? 
+                         `${data.parameter_type}: ${data.value || data.actual_value || 'N/A'} ${data.unit || ''}` :
+                         (data?.metric ? 
+                             `${data.metric}: ${data.value || data.actual_value || 'N/A'} ${data.unit || ''}` :
+                             "New alert received"));
+        
+        // Extract severity
+        let severity = data?.severity || 
+                      data?.alert_level || 
+                      "warning";
+
+        // --------------------------------------------------
+        // 2. BUILD DISPLAY MESSAGE
+        // --------------------------------------------------
+        const displayMessage = `<strong>${title}</strong><br>${message}`;
+
+        // Determine toast type
+        let toastType = "info";
+        if (severity === "critical" || severity === "danger") toastType = "danger";
+        else if (severity === "warning") toastType = "warning";
+        else if (severity === "success") toastType = "success";
+
+        // --------------------------------------------------
+        // 3. SHOW TOAST
+        // --------------------------------------------------
+        showToast(displayMessage, toastType);
+
+        // --------------------------------------------------
+        // 4. HANDLE SOUND
+        // --------------------------------------------------
+        let audioConfig = {};
+        if (data?.audio && typeof data.audio === 'object') {
+            audioConfig = {
+                sound: data.audio.sound || "beep",
+                volume: data.audio.volume || 0.6
+            };
+        } else if (data?.play_sound !== false) {
+            // Default sound if not explicitly disabled
+            audioConfig = { sound: "beep", volume: 0.6 };
+        }
+
+        // Play sound if we have config and audio is unlocked
+        if (Object.keys(audioConfig).length > 0 && audioUnlocked) {
+            playAlertSound(audioConfig);
+        }
+
+        // --------------------------------------------------
+        // 5. UPDATE BADGE
+        // --------------------------------------------------
+        updateAlertBadge();
+        
+        console.log(`✅ Alert displayed from ${eventName}`);
+    }
+
+    // --------------------------------------------------
+    // LISTEN TO BOTH EVENT NAMES
+    // --------------------------------------------------
+    
+    // Listens to alert_triggered (from trigger_rule method)
+    socket.on("alert_triggered", (data) => {
+        handleAnyAlert(data, "alert_triggered");
+    });
+    
+    // Listens to new_alert (from execute_web_notification method)
+    socket.on("new_alert", (data) => {
+        console.log("📢 NEW_ALERT event received (from web notifications)");
+        handleAnyAlert(data, "new_alert");
+    });
+
+    // Also listen for other possible event names
+    socket.on("alert", (data) => {
+        console.log("📢 ALERT event received");
+        handleAnyAlert(data, "alert");
+    });
+    
+    socket.on("notification", (data) => {
+        console.log("📢 NOTIFICATION event received");
+        handleAnyAlert(data, "notification");
+    });
+
+    // --------------------------------------------------
+    // SOUND HANDLING
+    // --------------------------------------------------
+    function playAlertSound(audioConfig) {
+        try {
+            const soundName = audioConfig?.sound || "beep";
+            const volume = audioConfig?.volume ?? 0.6;
+            const soundFile = `/static/sounds/${soundName}.mp3`;
+
+            console.log("🔊 Playing sound:", soundFile);
+
+            const audio = new Audio(soundFile);
+            audio.volume = volume;
+
+            audio.play().catch(err => {
+                console.warn("🔇 Audio playback blocked:", err.message);
+                fallbackBeep();
+            });
+        } catch (e) {
+            console.error("❌ Sound error:", e);
+            fallbackBeep();
+        }
+    }
+
+    function fallbackBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.frequency.value = 900;
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+
+            osc.start();
+            osc.stop(ctx.currentTime + 0.4);
+        } catch {
+            console.warn("🔇 Fallback beep failed");
+        }
+    }
+
+    // --------------------------------------------------
+    // ALERT BADGE
+    // --------------------------------------------------
+    function updateAlertBadge() {
+        const badge = document.getElementById("alertBadge");
+        if (!badge) return;
+
+        const current = parseInt(badge.textContent || "0", 10);
+        badge.textContent = current + 1;
+        badge.classList.remove("d-none");
+    }
+
+    // --------------------------------------------------
+    // TEST FUNCTIONS
+    // --------------------------------------------------
+    window.testAlertSystem = function () {
+        console.log("🧪 Requesting test alert from server...");
+        socket.emit("test_alert", { user_id: USER_ID });
+        showToast("Test alert requested", "info");
+    };
+
+    window.testBothEvents = function () {
+        console.log("🧪 Testing both event types...");
+        
+        // Test alert_triggered event
+        socket.emit("alert_triggered", {
+            title: "Test alert_triggered",
+            message: "This is a test of alert_triggered event",
+            severity: "success",
+            audio: { sound: "beep", volume: 0.5 }
+        });
+        
+        // Test new_alert event  
+        setTimeout(() => {
+            socket.emit("new_alert", {
+                title: "Test new_alert",
+                message: "This is a test of new_alert event",
+                severity: "warning",
+                audio: { sound: "beep", volume: 0.5 }
+            });
+        }, 1000);
+    };
+
+    window.checkEventListeners = function() {
+        console.log("🔍 Checking event listeners...");
+        const listeners = socket._callbacks || {};
+        console.log("Active listeners:", Object.keys(listeners));
+        
+        if (listeners.$alert_triggered) {
+            console.log("✅ alert_triggered has listeners");
+        }
+        if (listeners.$new_alert) {
+            console.log("✅ new_alert has listeners");
+        }
+    };
+
+    console.log("🎯 Socket.IO Alert System v3 Ready!");
+    console.log("💡 Listening to: alert_triggered, new_alert, alert, notification");
+    console.log("💡 Commands: testAlertSystem(), testBothEvents(), checkEventListeners()");
+
+})();
+</script>
+
+<!-- ================= DEBUG PANEL ================= -->
+<div id="debugPanel" style="position:fixed; bottom:10px; right:10px; background:#333; color:#fff; padding:10px; border-radius:5px; z-index:9999; font-size:12px; display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong>Debug Panel</strong>
+        <button onclick="showDebugPanel()" style="background:#666; color:#fff; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">X</button>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+        <button onclick="testAlertSystem()" style="background:#28a745; color:#fff; border:none; padding:4px; border-radius:3px; cursor:pointer; font-size:11px;">Test Alert</button>
+        <button onclick="simulateRealTimeAlert()" style="background:#17a2b8; color:#fff; border:none; padding:4px; border-radius:3px; cursor:pointer; font-size:11px;">Simulate Rule</button>
+        <button onclick="checkAlertFormat()" style="background:#6c757d; color:#fff; border:none; padding:4px; border-radius:3px; cursor:pointer; font-size:11px;">Check Format</button>
+        <button onclick="showToast('Test','success')" style="background:#ffc107; color:#000; border:none; padding:4px; border-radius:3px; cursor:pointer; font-size:11px;">Test Toast</button>
+    </div>
+</div>
+
+<script>
+// Auto-show debug panel after 3 seconds
+setTimeout(function() {
+    document.getElementById('debugPanel').style.display = 'block';
+    console.log("🔧 Debug panel enabled");
+}, 3000);
+</script>
+
+<!-- ================= EMERGENCY DEBUG ================= -->
+<script>
+// Log all Socket.IO events for debugging
+setTimeout(function() {
+    console.log("=== EMERGENCY DEBUG ===");
+    console.log("User ID:", {{ current_user.id if current_user else 'null' }});
+    
+    if (window.socket) {
+        console.log("Socket connected:", window.socket.connected);
+        console.log("Socket ID:", window.socket.id);
+        
+        // Log all events
+        window.socket.onAny(function(eventName, data) {
+            console.log(`🔍 Event: ${eventName}`, data);
+        });
+    }
+    
+    console.log("=== DEBUG READY ===");
+}, 5000);
+</script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

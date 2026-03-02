@@ -1,0 +1,72 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h2>Manage All Devices</h2>
+
+<!-- Access Denied Modal -->
+<div class="modal fade" id="accessDeniedModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">Access Denied</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="fas fa-ban fa-3x text-danger mb-3"></i>
+                    <h4>Permission Required</h4>
+                    <p>You do not have sufficient privileges to edit devices.</p>
+                    <p>Please contact the system administrator.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Device ID</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for device in devices %}
+        <tr>
+            <td>{{ device.name }}</td>
+            <td>{{ device.device_id }}</td>
+            <td>{{ device.owner.username }}</td>
+            <td>
+                <span class="badge bg-{{ 'success' if device.is_active else 'danger' }}">
+                    {{ "Active" if device.is_active else "Inactive" }}
+                </span>
+            </td>
+            <td>
+                <button type="button" 
+                        class="btn btn-primary btn-sm" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#accessDeniedModal">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="showDeleteWarning()" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+function showDeleteWarning() {
+    if (confirm("Are you sure you want to delete this device?\nThis action cannot be undone.")) {
+        alert("Access Denied: You cannot delete devices.");
+    }
+}
+</script>
+{% endblock %}

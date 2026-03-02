@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - IoT Management System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_dashboard.css') }}">
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('dashboard.dashboard_list') }}">
+                <i class="fas fa-chart-network me-2"></i>IoT Management System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('dashboard.dashboard_list') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i> My Dashboards
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-devices me-1"></i> Devices
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-fluid mt-4 flex-grow-1">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show mb-4" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="header-icon-container me-3">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <div>
+                        <h1 class="display-6 fw-bold mb-1">My Dashboards</h1>
+                        <p class="text-muted mb-0">Monitor and manage your IoT dashboards and connected devices</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            {% set stats = [
+                (dashboards|length, 'Total Dashboards', 'tachometer-alt', 'primary'),
+                (total_iot_sensors, 'Connected Sensors', 'microchip', 'success'),
+                (total_parameters, 'Monitored Parameters', 'chart-bar', 'info'),
+                (user.role, 'User Role', 'user-tag', 'warning')
+            ] %}
+            
+            {% for value, label, icon, color in stats %}
+            <div class="col-xl-3 col-md-6 mb-3">
+                <div class="stat-card stat-card-{{ color }}">
+                    <div class="stat-card-content">
+                        <div class="stat-card-icon">
+                            <i class="fas fa-{{ icon }}"></i>
+                        </div>
+                        <div class="stat-card-info">
+                            <h3 class="stat-card-value">{{ value }}</h3>
+                            <p class="stat-card-label">{{ label }}</p>
+                        </div>
+                    </div>
+                    <div class="stat-card-wave"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="row">
+            {% if dashboards %}
+                {% for dashboard in dashboards %}
+                    {% set stats = dashboard_stats.get(dashboard.id, {}) %}
+                    {% set device_count = stats.get('iot_sensor_count', 0) %}
+                    {% set param_count = stats.get('parameter_count', 0) %}
+                    {% set device_ids = stats.get('device_ids', []) %}
+                    
+                    <div class="col-xxl-3 col-lg-4 col-md-6 mb-4">
+                        <div class="dashboard-card">
+                            <div class="dashboard-card-header">
+                                <div class="dashboard-title-section">
+                                    <div class="dashboard-icon">
+                                        <i class="fas fa-chart-pie"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="dashboard-title">{{ dashboard.name }}</h5>
+                                        <div class="dashboard-badge">
+                                            <span class="sensor-count">{{ device_count }} sensors</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="dashboard-actions">
+                                    <a href="{{ url_for('dashboard.view_dashboard', dashboard_id=dashboard.id) }}" 
+                                       class="btn-view-dashboard">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="dashboard-card-body">
+                                <p class="dashboard-description">
+                                    {{ dashboard.description or "Monitor your IoT devices and sensor data in real-time." }}
+                                </p>
+                                
+                                <!-- Dashboard Stats -->
+                                <div class="dashboard-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-microchip"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <span class="stat-value">{{ device_count }}</span>
+                                            <span class="stat-label">Sensors</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <span class="stat-value">{{ param_count }}</span>
+                                            <span class="stat-label">Parameters</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <span class="stat-value">{{ device_count }}</span>
+                                            <span class="stat-label">Active</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Device Status -->
+                                {% if device_count > 0 %}
+                                    <div class="device-status">
+                                        <div class="status-indicator online"></div>
+                                        <span class="status-text">All devices online</span>
+                                    </div>
+                                {% else %}
+                                    <div class="empty-devices">
+                                        <i class="fas fa-plug"></i>
+                                        <span>No devices connected</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="dashboard-card-footer">
+                                <a href="{{ url_for('dashboard.view_dashboard', dashboard_id=dashboard.id) }}" 
+                                   class="btn btn-primary btn-view-full">
+                                    <i class="fas fa-external-link-alt me-2"></i> Open Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="col-12">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <h3>No Dashboards Available</h3>
+                        <p>You don't have any dashboards assigned to your account yet.</p>
+                        <div class="empty-state-help">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Contact your administrator to get access to IoT dashboards
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Activity Section -->
+        {% if dashboards %}
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="recent-activity-card">
+                    <div class="activity-card-header">
+                        <h5 class="activity-title">
+                            <i class="fas fa-history me-2"></i> Recent Activity
+                        </h5>
+                        <a href="#" class="view-all-link">View All</a>
+                    </div>
+                    <div class="activity-list">
+                        {% for dashboard in dashboards[:5] %}
+                        {% set stats = dashboard_stats.get(dashboard.id, {}) %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-main">
+                                    <span class="activity-dashboard">{{ dashboard.name }}</span>
+                                    <span class="activity-badge {{ 'active' if stats.iot_sensor_count > 0 else 'inactive' }}">
+                                        {{ stats.iot_sensor_count }} devices
+                                    </span>
+                                </div>
+                                <div class="activity-meta">
+                                    <span class="activity-time">
+                                        {% if dashboard.updated_at %}
+                                            Last updated {{ dashboard.updated_at.strftime('%b %d, %Y at %H:%M') }}
+                                        {% else %}
+                                            Never accessed
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="activity-action">
+                                <a href="{{ url_for('dashboard.view_dashboard', dashboard_id=dashboard.id) }}" 
+                                   class="btn-open-dashboard">
+                                    Open
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="container-fluid">
+            <div class="footer-content">
+                <div class="footer-copyright">
+                    <i class="fas fa-copyright me-1"></i> 2024 IoT Management System
+                </div>
+                <div class="footer-user">
+                    Logged in as: <strong>{{ user.username }}</strong> 
+                    <span class="user-role">({{ user.role }})</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Enhanced auto-dismiss alerts with smooth animation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss alerts
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    if (alert && alert.classList.contains('show')) {
+                        alert.classList.remove('show');
+                        alert.classList.add('fade');
+                        setTimeout(() => alert.remove(), 150);
+                    }
+                }, 5000);
+            });
+
+            // Add loading states to buttons
+            document.querySelectorAll('.btn-view-full, .btn-open-dashboard').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (this.href && !this.href.includes('javascript')) {
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Loading...';
+                        this.disabled = true;
+                        
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        }, 2000);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

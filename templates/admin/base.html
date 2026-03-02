@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel - KLED IoT{% endblock %}</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/admin/admin_base.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<div class="admin-wrapper">
+
+    <!-- ================= SIDEBAR ================= -->
+    <nav id="sidebar" class="sidebar shadow-sm">
+        <div class="sidebar-header">
+            <a class="navbar-brand" href="{{ url_for('admin.dashboard') }}">
+                <i class="fas fa-microchip me-2"></i>
+                <strong>KLED Admin</strong>
+            </a>
+        </div>
+
+        <ul class="list-unstyled components">
+<!-- DASHBOARD -->
+<li class="nav-section">DASHBOARD</li>
+<li>
+    <a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+        <i class="fas fa-tachometer-alt"></i>
+        <span>Dashboard</span>
+    </a>
+</li>
+
+<!-- IOT -->
+<li class="nav-section">IOT MANAGEMENT</li>
+<li>
+    <a href="{{ url_for('dashboard.dashboard_list') }}" class="nav-link">
+        <i class="fas fa-chart-line"></i>
+        <span>IoT Dashboards</span>
+    </a>
+</li>
+
+            <!-- DEVICES -->
+            <li class="nav-section">DEVICES</li>
+            <li>
+                <a href="{{ url_for('admin.manage_devices') }}" class="nav-link">
+                    <i class="fas fa-microchip"></i>
+                    <span>Manage Devices</span>
+                </a>
+            </li>
+
+            <!-- USERS -->
+            {% if current_user.role == 'super_admin' %}
+            <li class="nav-section">USERS</li>
+            <li>
+                <a href="{{ url_for('superadmin.manage_users') }}" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span>Manage Users</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- SETTINGS -->
+            <li class="nav-section">SYSTEM</li>
+            <li>
+                <a href="#" class="nav-link disabled">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings (Coming Soon)</span>
+                </a>
+            </li>
+
+            <!-- QUICK ACTION -->
+            <li class="nav-section">ACTIONS</li>
+            <!-- <li>
+                <a href="{{ url_for('dashboard.create_dashboard') }}" class="nav-link">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Create Dashboard</span>
+                </a>
+            </li> -->
+        </ul>
+
+        <!-- SIDEBAR FOOTER -->
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <div>
+                    <strong>{{ current_user.username }}</strong>
+                    <small>{{ current_user.role|title }}</small>
+                </div>
+            </div>
+
+            <div class="sidebar-actions">
+                <a href="{{ url_for('main.index') }}" title="Main Site">
+                    <i class="fas fa-home"></i>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================= MAIN CONTENT ================= -->
+    <div class="main-content">
+
+        <!-- TOP BAR -->
+        <nav class="navbar navbar-light bg-white shadow-sm px-3">
+            <button id="sidebarCollapse" class="btn btn-outline-secondary">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="dropdown ms-auto">
+                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                    <i class="fas fa-user"></i> {{ current_user.username }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-id-card"></i> Profile</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- PAGE CONTENT -->
+        <div class="content-container">
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+<!-- JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(function () {
+    $('#sidebarCollapse').click(function () {
+        $('#sidebar').toggleClass('collapsed');
+        $('.main-content').toggleClass('expanded');
+    });
+
+    // Active menu highlight
+    const path = window.location.pathname;
+    $('.nav-link').each(function () {
+        if ($(this).attr('href') === path) {
+            $(this).addClass('active');
+        }
+    });
+});
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

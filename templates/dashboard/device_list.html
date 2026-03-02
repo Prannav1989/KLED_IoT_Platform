@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Header -->
+    {% include 'dashboard/header.html' %}
+
+    <!-- Devices Section -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-microchip text-primary me-2"></i>
+                        Devices in: <strong>{{ dashboard.name }}</strong>
+                    </h5>
+                    <span class="badge bg-primary rounded-pill px-3 py-2">
+                        {{ device_data|length }} Devices
+                    </span>
+                </div>
+
+                <div class="card-body">
+
+                    {% if device_data %}
+                    <div class="row g-4">
+
+                        {% for item in device_data %}
+                        {% set device = item.device %}
+                        {% set status = item.computed_status %}
+                        {% set last_reading = item.last_reading_time %}
+                        {% set location = item.current_location %}
+                        {% set parameters = item.parameters %}
+
+                        <div class="col-xl-4 col-lg-6 col-md-6">
+                            <div class="card device-card border-0 shadow h-100">
+
+                                <!-- Card Header -->
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 text-truncate">
+                                        <i class="fas fa-microchip text-primary me-2"></i>
+                                        {{ device.name }}
+                                    </h6>
+
+                                    <span class="badge bg-{% if status == 'online' %}success{% else %}secondary{% endif %} px-2 py-1">
+                                        <i class="fas fa-circle fa-xs me-1"></i>{{ status|title }}
+                                    </span>
+                                </div>
+
+                                <!-- Card Body -->
+                                <div class="card-body">
+                                    <div class="small">
+
+                                        <!-- Device ID -->
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Device ID:</span>
+                                            <strong>{{ device.device_id or 'N/A' }}</strong>
+                                        </div>
+
+                                        <!-- Location -->
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Location:</span>
+                                            <span>
+                                                {% if location and location != 'Unknown' %}
+                                                <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                                {{ location }}
+                                                {% else %}
+                                                <span class="text-muted">Unknown</span>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+
+                                        <!-- Last Reading -->
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Last Reading:</span>
+                                            <span>
+                                                {% if last_reading %}
+                                                <small class="text-{% if status == 'online' %}success{% else %}muted{% endif %}">
+                                                    {{ last_reading.strftime('%Y-%m-%d %H:%M') }}
+                                                </small>
+                                                {% else %}
+                                                <small class="text-muted">No data</small>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+
+                                        <!-- Device Status -->
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Status:</span>
+                                            <span class="badge bg-{% if device.is_active %}success{% else %}warning{% endif %}">
+                                                {{ 'Active' if device.is_active else 'Inactive' }}
+                                            </span>
+                                        </div>
+
+                                        <!-- Parameters -->
+                                        <div class="mb-2">
+                                            <span class="text-muted">Parameters:</span><br>
+                                            {% if parameters %}
+                                                {% for p in parameters %}
+                                                <span class="badge bg-info text-dark me-1 mt-1">{{ p.name }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <small class="text-muted">No sensors</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card Footer -->
+                                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        Added: {{ device.created_at.strftime('%Y-%m-%d') if device.created_at else 'Unknown' }}
+                                    </small>
+
+                                    <a href="{{ url_for('dashboard_device.device_detail', dashboard_id=dashboard.id, device_id=device.id) }}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-info-circle me-1"></i>Details
+                                    </a>
+                                </div>
+
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                    </div>
+
+                    {% else %}
+                    <!-- No devices -->
+                    <div class="text-center py-5">
+                        <i class="fas fa-microchip fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Devices Found</h5>
+                        <p class="text-muted">No devices are currently assigned to this dashboard.</p>
+
+                        {% if current_user.role in ['admin', 'super_admin'] %}
+                        <a href="{{ url_for('dashboard_settings.dashboard_settings', dashboard_id=dashboard.id) }}#devices"
+                           class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>Add Devices
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

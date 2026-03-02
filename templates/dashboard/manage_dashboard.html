@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_list') }}">Dashboards</a></li>
+                    <li class="breadcrumb-item active">Manage {{ dashboard.name }}</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-cog me-2"></i>Manage Dashboard: {{ dashboard.name }}</h2>
+                <a href="{{ url_for('dashboard.view_dashboard', dashboard_id=dashboard.id) }}"
+                    class="btn btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i>View Dashboard
+                </a>
+            </div>
+            <p class="text-muted">{{ dashboard.description or 'No description provided' }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Device Management -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-sensors me-2"></i>Device Management</h5>
+                    <span class="badge bg-light text-dark">
+                        {{ current_devices|length }} devices ({{ total_parameters }} parameters)
+                    </span>
+                </div>
+                <div class="card-body">
+                    <!-- Current Devices -->
+                    <h6>Current Devices</h6>
+                    {% if current_devices %}
+                    <div class="mb-3">
+                        {% for device in current_devices %}
+                        <div class="mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>{{ device.name }}</strong>
+                                <button class="btn btn-sm btn-outline-danger remove-device"
+                                    data-device-id="{{ device.id }}" data-dashboard-id="{{ dashboard.id }}"
+                                    title="Remove entire device">
+                                    <i class="fas fa-trash"></i> Remove Device
+                                </button>
+                            </div>
+                            <div class="ms-3">
+                                {% for parameter in device.parameters %}
+                                <div class="d-flex justify-content-between align-items-center mb-1 ps-2">
+                                    <span>
+                                        <i class="fas fa-microchip me-1"></i>
+                                        {{ parameter.name }} ({{ parameter.sensor_type }})
+                                    </span>
+                                    <small class="text-muted">{{ parameter.unit }}</small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No devices assigned to this dashboard.
+                    </div>
+                    {% endif %}
+
+                    <!-- Add Devices -->
+                    <h6>Add New Devices</h6>
+                    {% if available_devices %}
+                    <div class="mb-3">
+                        {% for device in available_devices %}
+                        <div class="mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>{{ device.name }}</strong>
+                                <button class="btn btn-sm btn-outline-success add-device"
+                                    data-device-id="{{ device.id }}" data-dashboard-id="{{ dashboard.id }}"
+                                    title="Add entire device">
+                                    <i class="fas fa-plus"></i> Add Device
+                                </button>
+                            </div>
+                            <div class="ms-3">
+                                {% for parameter in device.parameters %}
+                                <div class="d-flex justify-content-between align-items-center mb-1 ps-2">
+                                    <span>
+                                        <i class="fas fa-microchip me-1"></i>
+                                        {{ parameter.name }} ({{ parameter.sensor_type }})
+                                    </span>
+                                    <small class="text-muted">{{ parameter.unit }}</small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No more devices available to add.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- User Assignments -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>User Assignments</h5>
+                    <span class="badge bg-light text-dark">{{ assigned_users|length }}/{{ all_users|length }}</span>
+                </div>
+                <div class="card-body">
+                    <!-- Assigned Users -->
+                    <h6>Assigned Users</h6>
+                    {% if assigned_users %}
+                    <div class="mb-3">
+                        {% for user in assigned_users %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                            <div>
+                                <strong>{{ user.username }}</strong>
+                                <span
+                                    class="badge bg-{{ 'primary' if user.role == 'admin' else 'secondary' if user.role == 'user' else 'info' }} ms-1">
+                                    {{ user.role|title }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </div>
+                            {% if current_user.role in ['super_admin', 'admin'] %}
+                            <button class="btn btn-sm btn-outline-danger unassign-user" data-user-id="{{ user.id }}"
+                                data-dashboard-id="{{ dashboard.id }}" title="Unassign User">
+                                <i class="fas fa-user-times"></i> Unassign
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No users assigned to this dashboard.
+                    </div>
+                    {% endif %}
+
+                    <!-- Available Users -->
+                    {% if current_user.role in ['super_admin', 'admin'] %}
+                    <h6>Available Users to Assign</h6>
+                    {% if available_users %}
+                    <div class="mb-3">
+                        {% for user in available_users %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                            <div>
+                                <strong>{{ user.username }}</strong>
+                                <span
+                                    class="badge bg-{{ 'primary' if user.role == 'admin' else 'secondary' if user.role == 'user' else 'info' }} ms-1">
+                                    {{ user.role|title }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-success assign-user" data-user-id="{{ user.id }}"
+                                data-dashboard-id="{{ dashboard.id }}" title="Assign User">
+                                <i class="fas fa-user-plus"></i> Assign
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No users available to assign.
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Info & Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Dashboard Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Company:</th>
+                                    <td>{{ dashboard.company.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Created By:</th>
+                                    <td>{{ dashboard.creator.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Created Date:</th>
+                                    <td>{{ dashboard.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Total Devices:</th>
+                                    <td>{{ total_devices }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('dashboard.dashboard_list') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboards
+                                </a>
+                                <form action="{{ url_for('dashboard.delete_dashboard', dashboard_id=dashboard.id) }}"
+                                    method="post" class="d-grid">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-outline-danger"
+                                        onclick="return confirm('Are you sure you want to delete this dashboard? This action cannot be undone.')">
+                                        <i class="fas fa-trash me-1"></i>Delete Dashboard
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // CSRF token for AJAX requests
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+        // Add device to dashboard
+        document.querySelectorAll('.add-device').forEach(button => {
+            button.addEventListener('click', function () {
+                const deviceId = this.dataset.deviceId;
+                const dashboardId = this.dataset.dashboardId;
+
+                if (confirm('Add this device with all its parameters to the dashboard?')) {
+                    fetch(`/dashboard/add_device/${dashboardId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ device_id: deviceId })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while adding the device');
+                        });
+                }
+            });
+        });
+
+        // Remove device from dashboard
+        document.querySelectorAll('.remove-device').forEach(button => {
+            button.addEventListener('click', function () {
+                if (confirm('Are you sure you want to remove this device and all its parameters from the dashboard?')) {
+                    const deviceId = this.dataset.deviceId;
+                    const dashboardId = this.dataset.dashboardId;
+
+                    fetch(`/dashboard/remove_device/${dashboardId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ device_id: deviceId })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while removing the device');
+                        });
+                }
+            });
+        });
+
+        // Assign user to dashboard
+        document.querySelectorAll('.assign-user').forEach(button => {
+            button.addEventListener('click', function () {
+                const userId = this.dataset.userId;
+                const dashboardId = this.dataset.dashboardId;
+
+                fetch(`/dashboard/assign_user/${dashboardId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ user_id: userId })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while assigning the user');
+                    });
+            });
+        });
+
+        // Unassign user from dashboard
+        document.querySelectorAll('.unassign-user').forEach(button => {
+            button.addEventListener('click', function () {
+                if (confirm('Are you sure you want to unassign this user from the dashboard?')) {
+                    const userId = this.dataset.userId;
+                    const dashboardId = this.dataset.dashboardId;
+
+                    fetch(`/dashboard/unassign_user/${dashboardId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ user_id: userId })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while unassigning the user');
+                        });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

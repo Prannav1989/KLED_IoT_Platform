@@ -1,0 +1,206 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <!-- Add a top margin to prevent content from being too close to top navbar -->
+    <div class="row mb-4 mt-3"> 
+        <div class="col-12">
+            <!-- Create New Dashboard Commented for future use -->
+            <!-- <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-cog me-2"></i>Dashboard Management - {{ company.name }}</h2>
+                <a href="{{ url_for('dashboard.create_dashboard') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Create New Dashboard
+                </a>
+            </div> -->
+            <p class="text-muted">Manage dashboards for your company</p>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ total_iot_sensors }}</h4>
+                            <p class="mb-0">
+                                {% if current_user.role == 'super_admin' %}
+                                    Total IoT Devices
+                                {% else %}
+                                    Assigned IoT Devices
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-microchip fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ total_parameters }}</h4>
+                            <p class="mb-0">Total Parameters</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-bar fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ users|length }}</h4>
+                            <p class="mb-0">Company Users</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ active_dashboards }}</h4>
+                            <p class="mb-0">Active Dashboards</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboards Grid -->
+    <div class="row">
+        {% if dashboards %}
+            {% for dashboard in dashboards %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 dashboard-card">  <!-- Added dashboard-card class -->
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ dashboard.name }}</h5>
+                        <span class="badge bg-primary">{{ dashboard_stats[dashboard.id].iot_sensor_count }} sensors</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ dashboard.description or 'No description provided' }}</p>
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>Created by: {{ dashboard.creator.username }}<br>
+                                <i class="fas fa-calendar me-1"></i>Created: {{ dashboard.created_at.strftime('%Y-%m-%d') }}
+                            </small>
+                        </div>
+                        <div class="assigned-users mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-users me-1"></i>
+                                Assigned to {{ dashboard.user_assignments|length }} users
+                            </small>
+                        </div>
+                        <!-- Dashboard-specific stats -->
+                        <div class="dashboard-stats">
+                            <small class="text-muted">
+                                <i class="fas fa-microchip me-1"></i>
+                                {{ dashboard_stats[dashboard.id].iot_sensor_count }} IoT Devices •
+                                {{ dashboard_stats[dashboard.id].parameter_count }} Parameters
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100">
+                            <a href="{{ url_for('dashboard.view_dashboard', dashboard_id=dashboard.id) }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                            <a href="{{ url_for('dashboard.manage_dashboard', dashboard_id=dashboard.id) }}" 
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-cog me-1"></i>Manage
+                            </a>
+                            <form action="{{ url_for('dashboard.delete_dashboard', dashboard_id=dashboard.id) }}" 
+                                  method="post" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                        onclick="return confirm('Are you sure you want to delete this dashboard?')">
+                                    <i class="fas fa-trash me-1"></i>Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-tachometer-alt fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Dashboards Created Yet</h4>
+                <p class="text-muted">Get started by creating your first dashboard</p>
+                <a href="{{ url_for('dashboard.create_dashboard') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-1"></i>Create Your First Dashboard
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // You'll need to calculate these values in your route or via JavaScript
+    const totalIotSensors = {{ total_iot_sensors | default(0) | tojson }};
+    const activeDashboards = {{ active_dashboards | default(0) | tojson }};
+
+    // Add some JavaScript to handle mobile responsiveness better
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure content doesn't get hidden behind sidebar on mobile
+        function checkSidebarState() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            
+            if (window.innerWidth <= 768) {
+                if (sidebar && sidebar.classList.contains('active')) {
+                    // Sidebar is open on mobile
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = 'auto';
+                }
+            } else {
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Check on load and resize
+        checkSidebarState();
+        window.addEventListener('resize', checkSidebarState);
+
+        // Optional: Add smooth scrolling for better UX
+        const dashboardCards = document.querySelectorAll('.dashboard-card');
+        dashboardCards.forEach(card => {
+            card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+            
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+                this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '';
+            });
+        });
+    });
+</script>
+{% endblock %}

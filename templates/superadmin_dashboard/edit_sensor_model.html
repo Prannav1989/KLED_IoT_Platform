@@ -1,0 +1,101 @@
+{% extends "superadmin_dashboard/base_superadmin.html" %}
+
+{% block title %}Edit Sensor Model - SuperAdmin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Sensor Model: {{ sensor_model.model_name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('superadmin.edit_sensor_model', model_id=sensor_model.id) }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="model_name" class="form-label">Model Name *</label>
+                                <input type="text" class="form-control" id="model_name" name="model_name" 
+                                       value="{{ sensor_model.model_name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="manufacturer" class="form-label">Manufacturer *</label>
+                                <input type="text" class="form-control" id="manufacturer" name="manufacturer" 
+                                       value="{{ sensor_model.manufacturer }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sensor_type" class="form-label">Sensor Type *</label>
+                                <select class="form-select" id="sensor_type" name="sensor_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="temperature" {% if sensor_model.sensor_type == 'temperature' %}selected{% endif %}>Temperature</option>
+                                    <option value="humidity" {% if sensor_model.sensor_type == 'humidity' %}selected{% endif %}>Humidity</option>
+                                    <option value="pressure" {% if sensor_model.sensor_type == 'pressure' %}selected{% endif %}>Pressure</option>
+                                    <option value="air_quality" {% if sensor_model.sensor_type == 'air_quality' %}selected{% endif %}>Air Quality</option>
+                                    <option value="vibration" {% if sensor_model.sensor_type == 'vibration' %}selected{% endif %}>Vibration</option>
+                                    <option value="other" {% if sensor_model.sensor_type == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="measurement_unit" class="form-label">Measurement Unit *</label>
+                                <input type="text" class="form-control" id="measurement_unit" name="measurement_unit" 
+                                       value="{{ sensor_model.measurement_unit }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="min_range" class="form-label">Minimum Range</label>
+                                <input type="number" step="any" class="form-control" id="min_range" name="min_range" 
+                                       value="{{ sensor_model.min_range if sensor_model.min_range else '' }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="max_range" class="form-label">Maximum Range</label>
+                                <input type="number" step="any" class="form-control" id="max_range" name="max_range" 
+                                       value="{{ sensor_model.max_range if sensor_model.max_range else '' }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="accuracy" class="form-label">Accuracy (%)</label>
+                                <input type="number" step="0.01" class="form-control" id="accuracy" name="accuracy" 
+                                       value="{{ sensor_model.accuracy if sensor_model.accuracy else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ sensor_model.description or '' }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="specifications" class="form-label">Specifications (JSON)</label>
+                            <textarea class="form-control" id="specifications" name="specifications" rows="3">{{ sensor_model.specifications|tojson if sensor_model.specifications else '' }}</textarea>
+                            <small class="form-text text-muted">Enter additional specifications in JSON format (optional)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="active" {% if sensor_model.status == 'active' %}selected{% endif %}>Active</option>
+                                <option value="inactive" {% if sensor_model.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('superadmin.manage_sensor_models') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save me-1"></i>Update Sensor Model
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

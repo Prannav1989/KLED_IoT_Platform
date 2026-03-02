@@ -1,0 +1,478 @@
+{% extends "superadmin_dashboard/base.html" %}
+
+
+{% block title %}Edit Device - IoT Management System{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{{ url_for('superadmin.device_management') }}" class="btn btn-outline-secondary back-btn">
+            <i class="fas fa-arrow-left me-1"></i> Back to Devices
+        </a>
+    </div>
+    <h2 class="text-center mb-0"><i class="fas fa-microchip me-2"></i>Edit Device</h2>
+    <div></div> <!-- For spacing -->
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+{% set actual_last_seen = last_seen %}
+{% if not actual_last_seen and last_reading_time %}
+{% set actual_last_seen = last_reading_time %}
+{% endif %}
+
+<div class="row">
+    <!-- Device Information Card -->
+    <div class="col-lg-8">
+        <div class="card device-info-card mb-4">
+            <div class="card-header py-3">
+                <h5 class="m-0"><i class="fas fa-info-circle me-2"></i>Device Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('superadmin.edit_device', id=device.id) }}">
+                    <!-- CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Device Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ device.name }}"
+                                   required>
+                        </div>
+
+                        <!-- STATUS CALCULATION -->
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <div>
+                                {% if actual_last_seen %}
+                                {% set time_diff = (now - actual_last_seen).total_seconds() %}
+                                
+                                {% if time_diff < 300 %}
+                                    <span class="status-badge" style="background-color: #75FF75; color: #000;">
+                                        <i class="fas fa-circle me-1"></i> Online
+                                    </span>
+                                {% elif time_diff < 7200 %}
+                                    <span class="status-badge" style="background-color: #FFD875; color: #000;">
+                                        <i class="fas fa-circle me-1"></i> Idle
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge" style="background-color: #FF7575; color: #000;">
+                                        <i class="fas fa-circle me-1"></i> Offline
+                                    </span>
+                                {% endif %}
+
+                                <small class="text-muted d-block mt-1">
+                                    Last seen {{ actual_last_seen.strftime('%Y-%m-%d %H:%M:%S') }}
+                                </small>
+
+                                {% else %}
+                                <span class="status-badge" style="background-color: #E3FFE3; color: #000;">
+                                    <i class="fas fa-circle me-1"></i> Never Connected
+                                </span>
+                                <small class="text-muted d-block mt-1">Device has never sent data</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="device_id" class="form-label">Device EUI/ID *</label>
+                            <input type="text" class="form-control" id="device_id" name="device_id"
+                                   value="{{ device.device_id }}" required>
+                            <div class="form-text">Unique identifier for the device</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="mqtt_topic" class="form-label">MQTT Topic *</label>
+                            <input type="text" class="form-control" id="mqtt_topic" name="mqtt_topic"
+                                   value="{{ device.mqtt_topic }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description"
+                                  rows="3">{{ device.description }}</textarea>
+                    </div>
+
+                    <!-- NEW: Company and Owner Selection -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="company_id" class="form-label">Company</label>
+                            <select class="form-select" id="company_id" name="company_id">
+                                <option value="">-- Select Company --</option>
+                                {% for company in companies %}
+                                <option value="{{ company.id }}" 
+                                    {% if device and device.company_id == company.id %}selected{% endif %}>
+                                    {{ company.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="user_id" class="form-label">Owner</label>
+                            <select class="form-select" id="user_id" name="user_id">
+                                <option value="">-- Select Owner --</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" 
+                                    {% if device.user_id == user.id %}selected{% endif %}>
+                                    {{ user.username }} ({{ user.email }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Sensor Model Selection -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="sensor_model_id" class="form-label">Sensor Model</label>
+                            <select class="form-select" id="sensor_model_id" name="sensor_model_id">
+                                <option value="">-- No Sensor Model --</option>
+                                {% for model in sensor_models %}
+                                <option value="{{ model.id }}" 
+                                    {% if device.sensor_model_id == model.id %}selected{% endif %}
+                                    data-parameters='{{ model.parameters|tojson|safe if model.parameters else "[]" }}'>
+                                    {{ model.name }} ({{ model.manufacturer }}) - {{ (model.parameters|length if model.parameters else 0) }} parameters
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select a sensor model to auto-create parameters</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4 pt-3">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                {% if device.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">Device Active</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sensor Model Parameters Preview -->
+                    <div id="model-preview" class="mb-3 border rounded p-3" style="display: none;">
+                        <h6 class="mb-2"><i class="fas fa-list me-1"></i>Selected Model Parameters</h6>
+                        <div id="parameters-list" class="small">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                        <div class="alert alert-warning mt-2 p-2 small">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Warning:</strong> Changing the sensor model will remove all existing parameters and create new ones from the selected model.
+                        </div>
+                    </div>
+
+                    {% if mqtt_configs %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="mqtt_config_id" class="form-label">MQTT Configuration</label>
+                            <select class="form-select" id="mqtt_config_id" name="mqtt_config_id">
+                                <option value="">-- Select MQTT Config --</option>
+                                {% for config in mqtt_configs %}
+                                <option value="{{ config.id }}" 
+                                    {% if device.mqtt_config_id == config.id %}selected{% endif %}>
+                                    {{ config.name }} ({{ config.broker_url }}:{{ config.port }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="form-label">Internal Device ID</label>
+                                    <p class="form-control-static">{{ device.id }}</p>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Created At</label>
+                                    <p class="form-control-static">
+                                        {% if device.created_at %}
+                                        {{ device.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                                        {% else %}
+                                        Unknown
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Save
+                            Changes</button>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteDeviceModal">
+                            <i class="fas fa-trash me-1"></i> Delete Device
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+
+        <!-- Current Sensor Model Info -->
+        <div class="card mb-4">
+            <div class="card-header py-3">
+                <h5 class="m-0"><i class="fas fa-cube me-2"></i>Current Sensor Model</h5>
+            </div>
+            <div class="card-body">
+                {% if device_sensor_model %}
+                <div class="text-center mb-3">
+                    <div class="badge bg-info p-2 mb-2" style="font-size: 1rem;">
+                        {{ device_sensor_model.name }}
+                    </div>
+                    <p class="small mb-1">
+                        <strong>Manufacturer:</strong> {{ device_sensor_model.manufacturer or 'N/A' }}
+                    </p>
+                    <p class="small mb-2">
+                        <strong>Parameters:</strong> {{ (device_sensor_model.parameters|length if device_sensor_model.parameters else 0) }}
+                    </p>
+                    <p class="small text-muted">
+                        {{ device_sensor_model.description or 'No description' }}
+                    </p>
+                </div>
+                {% else %}
+                <div class="text-center">
+                    <span class="badge bg-secondary p-2 mb-3">No Sensor Model</span>
+                    <p class="text-muted small">This device is not using a sensor model.</p>
+                    <p class="text-muted small">Select a model above to auto-create parameters.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Parameters List -->
+        <div class="card mb-4">
+            <div class="card-header py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="m-0"><i class="fas fa-sensors me-2"></i>Parameters ({{ sensors|length }})</h5>
+                    {% if sensors|length > 0 %}
+                    <span class="badge bg-info">{{ sensors|length }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if sensors %}
+                <div class="list-group">
+                    {% for sensor in sensors %}
+                    {% set reading = sensor_last_readings[sensor.id] %}
+                    <div class="list-group-item sensor-item p-3 mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ sensor.name }}</h6>
+                                <p class="mb-1 text-muted small">{{ sensor.sensor_type }} (ID: {{ sensor.id }})</p>
+
+                                <div class="mt-2">
+                                    <small class="d-block">
+                                        <strong>Last Reading:</strong>
+                                        {% if reading.value is not none %}
+                                        {{ reading.value }} {{ reading.unit or sensor.unit }}
+                                        {% else %}
+                                        <span class="text-muted">No data</span>
+                                        {% endif %}
+                                    </small>
+
+                                    <small class="d-block text-muted">
+                                        <strong>Timestamp:</strong>
+                                        {% if reading.timestamp %}
+                                        {{ reading.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                                        {% else %}
+                                        Never
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            <span class="badge bg-info ms-2">{{ sensor.unit }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-sensors fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">No parameters attached to this device</p>
+                    <p class="text-muted small">Select a sensor model above to create parameters.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Device Statistics -->
+        <div class="card mb-4">
+            <div class="card-header py-3">
+                <h5 class="m-0"><i class="fas fa-chart-bar me-2"></i>Device Statistics</h5>
+            </div>
+            <div class="card-body">
+
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-2">
+                            <h4 class="text-primary">{{ sensor_data_count }}</h4>
+                            <small class="text-muted">Data Points</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-2">
+                            <h4 class="text-info">{{ sensors|length }}</h4>
+                            <small class="text-muted">Parameters</small>
+                        </div>
+                    </div>
+                </div>
+
+                {% if last_reading_time %}
+                <div class="mt-3 p-2 border rounded bg-light">
+                    <h6 class="mb-2 text-center">Most Recent Reading</h6>
+                    <div class="text-center">
+                        <span class="h5 text-primary">{{ last_reading.value }} {{ last_reading.unit }}</span>
+                        <br>
+                        <small class="text-muted">
+                            {{ last_reading_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </small>
+                        <br>
+
+                        <!-- TIME SINCE LAST READING -->
+                        {% set time_since = (now - last_reading_time).total_seconds() %}
+                        <small class="text-muted">
+                            {% if time_since < 60 %}
+                                {{ time_since|int }} seconds ago
+                            {% elif time_since < 3600 %}
+                                {{ (time_since / 60)|int }} minutes ago
+                            {% elif time_since < 86400 %}
+                                {{ (time_since / 3600)|int }} hours ago
+                            {% else %}
+                                {{ (time_since / 86400)|int }} days ago
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                {% else %}
+                <div class="mt-3 p-2 border rounded bg-light text-center">
+                    <h6 class="mb-2">Most Recent Reading</h6>
+                    <span class="text-muted">No data received yet</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Device Modal -->
+<div class="modal fade" id="deleteDeviceModal" tabindex="-1" aria-labelledby="deleteDeviceModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteDeviceModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the device <strong>{{ device.name }}</strong>?</p>
+                <p class="text-danger">This action cannot be undone and will remove all associated sensor data.</p>
+                <p><strong>Statistics:</strong></p>
+                <ul>
+                    <li>{{ sensors|length }} parameters will be removed</li>
+                    <li>{{ sensor_data_count }} data points will be deleted</li>
+                    {% if device_sensor_model %}
+                    <li>Sensor Model: {{ device_sensor_model.name }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('superadmin.delete_device', id=device.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn btn-danger">Delete Device</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Edit Device page loaded");
+    
+    // Sensor model preview functionality
+    const sensorModelSelect = document.getElementById('sensor_model_id');
+    const modelPreview = document.getElementById('model-preview');
+    const parametersList = document.getElementById('parameters-list');
+    
+    if (sensorModelSelect) {
+        // Initial check on page load
+        updateModelPreview();
+        
+        // Update on change
+        sensorModelSelect.addEventListener('change', updateModelPreview);
+    }
+    
+    function updateModelPreview() {
+        const selectedOption = sensorModelSelect.options[sensorModelSelect.selectedIndex];
+        
+        if (selectedOption.value) {
+            try {
+                const parameters = JSON.parse(selectedOption.getAttribute('data-parameters') || '[]');
+                
+                if (parameters.length > 0) {
+                    let html = `<div class="mb-2"><strong>${parameters.length} parameters will be created:</strong></div><ul class="mb-0">`;
+                    
+                    parameters.forEach((param, index) => {
+                        const paramName = param.parameter_name || param.name || `Parameter ${index + 1}`;
+                        const paramType = param.parameter_type || param.type || 'numeric';
+                        const paramUnit = param.unit || 'N/A';
+                        const mqttField = param.mqtt_field_name || param.field || 'N/A';
+                        
+                        html += `<li class="mb-1">
+                            <span class="badge bg-secondary me-1">${paramType}</span>
+                            <strong>${paramName}</strong>
+                            <span class="badge bg-info ms-1">${paramUnit}</span>
+                            <small class="text-muted d-block">MQTT field: <code>${mqttField}</code></small>
+                        </li>`;
+                    });
+                    
+                    html += '</ul>';
+                    parametersList.innerHTML = html;
+                    modelPreview.style.display = 'block';
+                } else {
+                    parametersList.innerHTML = '<div class="text-center"><p class="mb-0 text-muted">This model has no defined parameters</p></div>';
+                    modelPreview.style.display = 'block';
+                }
+            } catch (error) {
+                parametersList.innerHTML = '<div class="alert alert-danger p-2"><small>Error parsing parameters</small></div>';
+                modelPreview.style.display = 'block';
+            }
+        } else {
+            modelPreview.style.display = 'none';
+        }
+    }
+    
+    // Show warning if changing sensor model with existing parameters
+    const originalSensorModelId = "{{ device.sensor_model_id or '' }}";
+    
+    sensorModelSelect.addEventListener('change', function() {
+        if (originalSensorModelId && this.value !== originalSensorModelId && {{ sensors|length }} > 0) {
+            if (!confirm('Changing the sensor model will remove all existing parameters. Are you sure?')) {
+                // Reset to original value
+                this.value = originalSensorModelId;
+                updateModelPreview();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

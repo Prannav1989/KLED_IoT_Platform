@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Dashboard</h2>
+    <div class="stats">
+        <div class="stat-card">
+            <h3>Users</h3>
+            <p>{{ users|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>MQTT Configs</h3>
+            <p>{{ configs|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Devices</h3>
+            <p>{{ devices|length }}</p>
+        </div>
+    </div>
+    
+    {% if user_role in ['super_admin', 'admin'] %}
+    <section class="recent-activity">
+        <h3>Recent Activity</h3>
+        <!-- Add recent activity logs here -->
+    </section>
+    {% endif %}
+{% endblock %}

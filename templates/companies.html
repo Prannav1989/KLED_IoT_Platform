@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Company Management</h2>
+    
+    <!-- Add Company Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Add New Company</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Company Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="logo" class="form-label">Company Logo</label>
+                    <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Company</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Companies Table -->
+    <div class="card">
+        <div class="card-header">
+            <h4>Existing Companies</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Logo</th>
+                            <th>Name</th>
+                            <th>Users</th>
+                            <th>Devices</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company in companies %}
+                        <tr>
+                            <td>
+                                {% if company.logo %}
+                                <img src="{{ url_for('static', filename='uploads/' + company.logo) }}" 
+                                     alt="{{ company.name }}" style="height: 40px;">
+                                {% endif %}
+                            </td>
+                            <td>{{ company.name }}</td>
+                            <td>{{ company.users|length }}</td>
+                            <td>{{ company.devices|length }}</td>
+                            <td>{{ company.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <a href="{{ url_for('company_detail', company_id=company.id) }}" 
+                                   class="btn btn-sm btn-primary">Manage</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

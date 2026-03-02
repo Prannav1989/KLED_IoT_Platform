@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Sensor Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">Sensor Dashboard</h2>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-center bg-light">
+                <div class="card-body">
+                    <h5>Total Devices</h5>
+                    <h3 id="total-devices" class="text-primary">{{ total_devices }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-light">
+                <div class="card-body">
+                    <h5>Online Devices</h5>
+                    <h3 id="online-devices" class="text-success">{{ online_devices_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-light">
+                <div class="card-body">
+                    <h5>Offline Devices</h5>
+                    <h3 id="offline-devices" class="text-danger">{{ offline_devices_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-light">
+                <div class="card-body">
+                    <h5>Inactive Devices</h5>
+                    <h3 id="inactive-devices" class="text-secondary">{{ inactive_devices_count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Sensor Widgets -->
+    <h4 class="mt-4 mb-3">Latest Sensor Readings</h4>
+    <div class="row" id="sensor-widgets">
+        {% for sensor in grouped_sensors %}
+        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+            <div class="card sensor-widget">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{{ sensor.device_name }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-clock"></i> Last Updated: 
+                        {% if sensor.timestamp %}
+                            {{ sensor.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                        {% else %}
+                            No data yet
+                        {% endif %}
+                    </p>
+                    <div class="row">
+                        {% for param in sensor.parameters %}
+                        <div class="col-md-6 col-sm-6 mb-3">
+                            <div class="parameter-box p-2 border rounded">
+                                <strong class="d-block text-primary">{{ param.name|title }}</strong>
+                                <span class="parameter-value h5">{{ param.value }} {{ param.unit }}</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-warning text-center py-2">
+                                <small>No sensor data available</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                No sensor devices found. Please add devices or check allocations.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Devices Table -->
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Device Status Overview</h5>
+            <span class="badge bg-primary">{{ devices|length }} devices</span>
+        </div>
+        <div class="card-body table-responsive p-0">
+            <table class="table table-bordered table-hover mb-0" id="devices-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Device ID</th>
+                        <th>Status</th>
+                        <th>Last Seen</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    <tr>
+                        <td>{{ device.id }}</td>
+                        <td>{{ device.name }}</td>
+                        <td><code>{{ device.device_id }}</code></td>
+                        <td>
+                            {% if device.status == 'online' %}
+                            <span class="badge bg-success">Online</span>
+                            {% elif device.status == 'offline' %}
+                            <span class="badge bg-danger">Offline</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.last_seen %}
+                                {{ device.last_seen.strftime('%Y-%m-%d %H:%M:%S') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-3">
+                            No devices found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Sensor Data -->
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Sensor Data (Last 50 readings)</h5>
+            <span class="badge bg-info">{{ recent_data|length }} readings</span>
+        </div>
+        <div class="card-body table-responsive p-0">
+            <table class="table table-striped table-hover mb-0" id="recent-sensor-data">
+                <thead class="table-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Device</th>
+                        <th>Sensor Type</th>
+                        <th>Value</th>
+                        <th>Unit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in recent_data %}
+                    <tr>
+                        <td>{{ data.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ data.device.name if data.device else 'Unknown' }}</td>
+                        <td>{{ data.sensor.sensor_type if data.sensor and data.sensor.sensor_type else 'Unknown' }}</td>
+                        <td><strong>{{ data.value }}</strong></td>
+                        <td>{{ data.unit }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                            No recent sensor data available
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sensor-widget {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border: none;
+    }
+
+    .sensor-widget:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .parameter-box {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .parameter-box:hover {
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        transform: scale(1.02);
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+    #devices-table tr:hover {
+        background-color: rgba(13, 110, 253, 0.04);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Add Font Awesome for icons -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+
+    const socket = io();
+
+    // Listen for real-time updates
+    socket.on('device_status_update', (data) => {
+        console.log("Device update:", data);
+        // Update device status in real-time
+        updateDeviceStatus(data);
+    });
+
+    socket.on('sensor_data_update', (data) => {
+        console.log("Sensor data update:", data);
+        // Update sensor widgets in real-time
+        updateSensorData(data);
+    });
+
+    function updateDeviceStatus(deviceData) {
+        // Implement real-time device status updates
+        const deviceRow = document.querySelector(`#devices-table tr[data-device-id="${deviceData.id}"]`);
+        if (deviceRow) {
+            const statusCell = deviceRow.querySelector('td:nth-child(4)');
+            const lastSeenCell = deviceRow.querySelector('td:nth-child(5)');
+            
+            statusCell.innerHTML = deviceData.status === 'online' ? 
+                '<span class="badge bg-success">Online</span>' : 
+                '<span class="badge bg-danger">Offline</span>';
+            
+            lastSeenCell.textContent = deviceData.last_seen ? 
+                new Date(deviceData.last_seen).toLocaleString() : '-';
+        }
+    }
+
+    function updateSensorData(sensorData) {
+        // Implement real-time sensor data updates
+        console.log("Updating sensor data:", sensorData);
+        // You would need to implement the specific update logic here
+    }
+
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+        // You can implement a gentle data refresh here
+        console.log("Auto-refreshing dashboard data...");
+    }, 30000);
+</script>
+{% endblock %}

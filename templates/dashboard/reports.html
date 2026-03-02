@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+  <div class="card shadow-lg border-0 rounded-4">
+
+    <!-- HEADER -->
+    <div class="card-header text-white p-3"
+         style="background: linear-gradient(135deg, #76ecdd, #74ee92, #70f5b2);">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">
+          <i class="bi bi-file-earmark-text me-2"></i>Device Report Generator
+        </h4>
+
+        {% if dashboard_id %}
+          <a href="{{ url_for('dashboard.view_dashboard', dashboard_id=dashboard_id) }}"
+             class="btn btn-light btn-sm fw-semibold shadow-sm">
+            <i class="bi bi-arrow-left-circle"></i> Back
+          </a>
+        {% else %}
+          <a href="{{ url_for('dashboard.dashboard_list') }}"
+             class="btn btn-light btn-sm fw-semibold shadow-sm">
+            <i class="bi bi-arrow-left-circle"></i> Back
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="card-body p-4">
+      
+      <!-- DEBUG INFO (Remove this section after testing) -->
+      <div class="alert alert-info mb-3">
+        <i class="bi bi-info-circle"></i>
+        <strong>Access Info:</strong><br>
+        User: <strong>{{ current_user.username }}</strong> ({{ current_user.role }})<br>
+        Dashboard ID: {{ dashboard_id or 'Not specified' }}<br>
+        Devices available: {{ devices|length }}
+        {% if devices %}
+          <br>Device Names: {{ devices|map(attribute='name')|join(', ') }}
+        {% endif %}
+      </div>
+
+      <!-- ================= REPORT FORM ================= -->
+      <form method="POST" action="{{ url_for('report_bp.reports', dashboard_id=dashboard_id) }}"
+            id="reportForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="dashboard_id" value="{{ dashboard_id }}">
+
+        <!-- DATE RANGE -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Start Date & Time</label>
+            <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">End Date & Time</label>
+            <input type="datetime-local" class="form-control" id="end_date" name="end_date" required>
+          </div>
+        </div>
+
+        <!-- TIME INTERVAL SELECTOR (FOR EXCEL ONLY) -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Excel Data Interval (Optional)</label>
+            <div class="alert alert-warning mb-0">
+              <small>
+                <i class="bi bi-info-circle"></i> This setting only affects Excel exports. 
+                PDF reports will always show raw data.
+              </small>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Select Time Interval for Averaging</label>
+            <select class="form-select" id="time_interval" name="time_interval">
+              <option value="">Raw Data (No averaging)</option>
+              <option value="1 minute">1 Minute Average</option>
+              <option value="5 minutes">5 Minute Average</option>
+              <option value="1 hour">1 Hour Average</option>
+              <option value="6 hours">6 Hour Average</option>
+              <option value="1 day">Daily Average</option>
+            </select>
+            <div class="form-text">
+              <small>When multiple readings exist in an interval, values will be averaged</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- DEVICE LIST -->
+        <div class="border rounded p-3 mb-3" style="max-height:300px; overflow-y:auto;">
+          {% if devices %}
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="selectAll">
+              <label class="form-check-label fw-bold">Select All Devices</label>
+            </div>
+            <hr>
+            {% for d in devices %}
+            <div class="form-check mb-2">
+              <input class="form-check-input device-checkbox" type="checkbox"
+                     name="device_ids[]" value="{{ d.id }}">
+              <label class="form-check-label">
+                <strong>{{ d.name }}</strong>
+                <small class="text-muted">(ID: {{ d.device_id or 'N/A' }})</small>
+                {% if current_user.role == 'admin' %}
+                  <br><small class="text-info"><i class="bi bi-person-check"></i> Your device</small>
+                {% endif %}
+              </label>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle"></i>
+              <strong>No devices available for reporting.</strong>
+              <div class="mt-2">
+                {% if current_user.role == 'admin' %}
+                  <p>As an <strong>admin</strong>, you can only see devices that:</p>
+                  <ul class="mb-0">
+                    <li>Are assigned to you, AND</li>
+                    {% if dashboard_id %}
+                      <li>Are linked to this dashboard</li>
+                    {% else %}
+                      <li>You own (regardless of dashboard)</li>
+                    {% endif %}
+                  </ul>
+                  <p class="mt-2 mb-0">Contact your super administrator to assign devices to you.</p>
+                {% else %}
+                  <p>No devices are configured in the system.</p>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="text-muted">
+            <small>
+              <i class="bi bi-shield-check"></i>
+              {% if current_user.role == 'admin' %}
+                Viewing only <strong>your assigned devices</strong>
+              {% else %}
+                Viewing <strong>all system devices</strong>
+              {% endif %}
+            </small>
+          </div>
+          <div class="btn-group">
+            {% if devices %}
+              <button type="submit" id="generatePdfBtn" class="btn btn-success">
+                <i class="bi bi-file-earmark-pdf"></i> PDF Report
+              </button>
+              <button type="button" id="generateExcelBtn"
+                      class="btn btn-primary" onclick="downloadExcelReport()">
+                <i class="bi bi-file-earmark-excel"></i> Excel Report
+              </button>
+            {% else %}
+              <button type="button" class="btn btn-secondary" disabled>
+                <i class="bi bi-file-earmark-pdf"></i> PDF Report
+              </button>
+              <button type="button" class="btn btn-secondary" disabled>
+                <i class="bi bi-file-earmark-excel"></i> Excel Report
+              </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- PROGRESS -->
+        <div id="reportProgress" class="mt-4 d-none">
+          <div class="d-flex align-items-center mb-2">
+            <div class="spinner-border spinner-border-sm text-success me-2"></div>
+            <span class="fw-semibold text-success">Generating report…</span>
+          </div>
+          <div class="progress" style="height:6px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                 style="width:100%"></div>
+          </div>
+        </div>
+
+      </form>
+
+      <!-- Hidden form for Excel download -->
+      <form id="excelForm" method="POST" action="{{ url_for('report_bp.download_excel_report') }}"
+            style="display: none;">
+        <!-- CSRF and dashboard_id will be copied from main form -->
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  const form = document.getElementById('reportForm');
+  const pdfBtn = document.getElementById('generatePdfBtn');
+  const excelBtn = document.getElementById('generateExcelBtn');
+  const progress = document.getElementById('reportProgress');
+
+  // Select All functionality
+  const selectAll = document.getElementById('selectAll');
+  if (selectAll) {
+    selectAll.addEventListener('change', () => {
+      document.querySelectorAll('.device-checkbox')
+        .forEach(cb => cb.checked = selectAll.checked);
+    });
+  }
+
+  // Validate at least one device is selected before form submission
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const checkedDevices = document.querySelectorAll('.device-checkbox:checked');
+      
+      if (checkedDevices.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one device.');
+        return false;
+      }
+      
+      // Show progress for PDF
+      if (pdfBtn) {
+        pdfBtn.disabled = true;
+        pdfBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Preparing...';
+      }
+      if (progress) {
+        progress.classList.remove('d-none');
+      }
+
+      // Reset button after 10 seconds (in case of error)
+      setTimeout(() => {
+        if (pdfBtn) {
+          pdfBtn.disabled = false;
+          pdfBtn.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> PDF Report';
+        }
+        if (progress) {
+          progress.classList.add('d-none');
+        }
+      }, 10000);
+    });
+  }
+
+  // Set default date range (last 7 days to now)
+  const now = new Date();
+  const endDate = new Date(now);
+  endDate.setMinutes(endDate.getMinutes() - endDate.getTimezoneOffset());
+  
+  const startDate = new Date(endDate);
+  startDate.setDate(startDate.getDate() - 7);
+  
+  // Format to YYYY-MM-DDTHH:mm
+  const formatDateForInput = (date) => {
+    return date.toISOString().slice(0, 16);
+  };
+  
+  const startInput = document.getElementById('start_date');
+  const endInput = document.getElementById('end_date');
+  
+  if (startInput) startInput.value = formatDateForInput(startDate);
+  if (endInput) endInput.value = formatDateForInput(endDate);
+});
+
+// Excel download function
+function downloadExcelReport() {
+  const form = document.getElementById('reportForm');
+  const excelForm = document.getElementById('excelForm');
+  const excelBtn = document.getElementById('generateExcelBtn');
+  const progress = document.getElementById('reportProgress');
+  
+  // Check if any devices are selected
+  const checkedDevices = document.querySelectorAll('.device-checkbox:checked');
+  if (checkedDevices.length === 0) {
+    alert('Please select at least one device.');
+    return false;
+  }
+  
+  // Copy form data to excel form
+  excelForm.innerHTML = '';
+  
+  // Copy CSRF token
+  const csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrf_token';
+  csrfInput.value = document.querySelector('#reportForm input[name="csrf_token"]').value;
+  excelForm.appendChild(csrfInput);
+  
+  // Copy dashboard ID
+  const dashboardId = document.querySelector('#reportForm input[name="dashboard_id"]');
+  if (dashboardId && dashboardId.value) {
+    const dashboardInput = document.createElement('input');
+    dashboardInput.type = 'hidden';
+    dashboardInput.name = 'dashboard_id';
+    dashboardInput.value = dashboardId.value;
+    excelForm.appendChild(dashboardInput);
+  }
+  
+  // Copy selected devices
+  checkedDevices.forEach(cb => {
+    const deviceInput = document.createElement('input');
+    deviceInput.type = 'hidden';
+    deviceInput.name = 'device_ids[]';
+    deviceInput.value = cb.value;
+    excelForm.appendChild(deviceInput);
+  });
+  
+  // Copy date range
+  const startDateInput = document.createElement('input');
+  startDateInput.type = 'hidden';
+  startDateInput.name = 'start_date';
+  startDateInput.value = document.getElementById('start_date').value;
+  excelForm.appendChild(startDateInput);
+  
+  const endDateInput = document.createElement('input');
+  endDateInput.type = 'hidden';
+  endDateInput.name = 'end_date';
+  endDateInput.value = document.getElementById('end_date').value;
+  excelForm.appendChild(endDateInput);
+  
+  // Copy time interval (if selected)
+  const timeIntervalSelect = document.getElementById('time_interval');
+  if (timeIntervalSelect && timeIntervalSelect.value) {
+    const timeIntervalInput = document.createElement('input');
+    timeIntervalInput.type = 'hidden';
+    timeIntervalInput.name = 'time_interval';
+    timeIntervalInput.value = timeIntervalSelect.value;
+    excelForm.appendChild(timeIntervalInput);
+  }
+  
+  // Show progress
+  if (excelBtn) {
+    excelBtn.disabled = true;
+    excelBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Preparing...';
+  }
+  if (progress) {
+    progress.classList.remove('d-none');
+  }
+  
+  // Submit the form
+  excelForm.submit();
+  
+  // Reset button after 10 seconds
+  setTimeout(() => {
+    if (excelBtn) {
+      excelBtn.disabled = false;
+      excelBtn.innerHTML = '<i class="bi bi-file-earmark-excel"></i> Excel Report';
+    }
+    if (progress) {
+      progress.classList.add('d-none');
+    }
+  }, 10000);
+  
+  return false;
+}
+</script>
+
+<!-- ================= STYLE ================= -->
+<style>
+.card { 
+  transition: .3s;
+  border: none;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,.12);
+}
+.progress { 
+  border-radius: 10px; 
+  overflow: hidden;
+}
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+}
+.form-check-input:checked {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+.btn-primary:hover {
+  background-color: #0069d9;
+  border-color: #0062cc;
+}
+.device-list {
+  border: 1px solid #dee2e6;
+}
+</style>
+
+{% endblock %}

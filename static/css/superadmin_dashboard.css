@@ -1,0 +1,237 @@
+/* superadmin_dashboard.css - SuperAdmin Dashboard Styles */
+
+/* =========================================================
+   GLOBAL LAYOUT (CRITICAL FIX)
+========================================================= */
+
+body {
+    margin: 0;
+    overflow-x: hidden;
+    background-color: #b8e7d0 !important; /* remove later if needed */
+}
+
+/* Sidebar layout */
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100vh;
+    z-index: 1000;
+    background: linear-gradient(180deg, #697a97 0%, #5d6575 100%);
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+/* Sidebar hidden (mobile) */
+#sidebar.active {
+    margin-left: -260px;
+}
+
+/* Main content */
+#content {
+    margin-left: 260px;
+    min-height: 100vh;
+    transition: all 0.3s ease;
+}
+
+/* Content full width when sidebar hidden */
+#content.active {
+    margin-left: 0;
+}
+
+/* =========================================================
+   GLOBAL STYLES
+========================================================= */
+
+.sa-container {
+    padding: 20px;
+}
+
+/* =========================================================
+   CARD STYLES
+========================================================= */
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: none !important;
+    padding: 1rem 1.25rem !important;
+    font-weight: 600;
+}
+
+.card-header h5 {
+    color: white !important;
+    margin-bottom: 0 !important;
+}
+
+/* =========================================================
+   STATS CARDS
+========================================================= */
+
+.card.bg-primary,
+.card.bg-success,
+.card.bg-warning,
+.card.bg-info {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.card.bg-primary:hover,
+.card.bg-success:hover,
+.card.bg-warning:hover,
+.card.bg-info:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================================
+   TABLES (iOS STYLE)
+========================================================= */
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+    font-size: 0.92rem;
+}
+
+.table thead th {
+    color: #6e6e73 !important;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    padding: 1rem .75rem;
+}
+
+.table tbody tr {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    transition: all 0.15s ease;
+}
+
+.table tbody tr:hover {
+    transform: scale(1.01);
+}
+
+.table tbody td {
+    padding: 1rem .9rem;
+    vertical-align: middle;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.55rem 1.4rem;
+    font-size: 0.9rem;
+    transition: all 0.25s ease;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-danger:hover {
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   BADGES
+========================================================= */
+
+.badge {
+    border-radius: 20px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+}
+
+/* =========================================================
+   ALERTS
+========================================================= */
+
+.alert {
+    border-radius: 10px;
+    border: none;
+    margin: 1rem;
+}
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.d-flex.justify-content-between.align-items-center.mb-4 {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 2rem;
+    border-left: 4px solid #667eea;
+}
+
+/* =========================================================
+   SIDEBAR CONTENT STYLES
+========================================================= */
+
+#sidebar .sidebar-header {
+    padding: 1.25rem;
+    text-align: center;
+}
+
+#sidebar .sidebar-header h3 {
+    color: #fff;
+    font-weight: 700;
+}
+
+#sidebar ul.components {
+    padding: 0;
+}
+
+#sidebar ul.components li a {
+    display: block;
+    padding: 12px 20px;
+    color: #cbd5e0;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+#sidebar ul.components li a:hover,
+#sidebar ul.components li a.active {
+    color: #fff;
+    background: rgba(102, 126, 234, 0.2);
+    border-left-color: #667eea;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -260px;
+    }
+
+    #sidebar.active {
+        margin-left: 0;
+    }
+
+    #content {
+        margin-left: 0;
+    }
+}

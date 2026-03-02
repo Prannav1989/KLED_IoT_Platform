@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Edit User
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('superadmin.edit_user', user_id=user.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       value="{{ user.username }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ user.email }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password (leave blank to keep current password)</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                            <div class="form-text">Minimum 8 characters</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="role" class="form-label">Role</label>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+                                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                                    <option value="super_admin" {% if user.role == 'super_admin' %}selected{% endif %}>Super Admin</option>
+                                </select>
+                            </div>
+<div class="col-md-6 mb-3">
+    <label for="company_id" class="form-label">Company</label>
+    <select class="form-select" id="company_id" name="company_id">
+        <option value="">None</option>
+        {% for company in companies %}
+            <option value="{{ company.id }}"
+                {% if user.company_id == company.id %}selected{% endif %}>
+                {{ company.name }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="parent_admin_id" class="form-label">Parent Admin</label>
+                            <select class="form-select" id="parent_admin_id" name="parent_admin_id">
+                                <option value="">None</option>
+                                {% for admin in admins %}
+                                    <option value="{{ admin.id }}" 
+                                            {% if user.parent_admin_id == admin.id %}selected{% endif %}>
+                                        {{ admin.username }} ({{ admin.role }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                       {% if user.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Active Account
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('superadmin.manage_users') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Users
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Update User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>User created: {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                    {% if user.last_login %}
+                        <br>
+                        <small>Last login: {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Simple form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            const username = document.getElementById('username');
+            const email = document.getElementById('email');
+            const password = document.getElementById('password');
+            
+            // Validate username
+            if (username.value.trim() === '') {
+                isValid = false;
+                highlightError(username, 'Username is required');
+            } else {
+                removeErrorHighlight(username);
+            }
+            
+            // Validate email
+            if (email.value.trim() === '') {
+                isValid = false;
+                highlightError(email, 'Email is required');
+            } else if (!isValidEmail(email.value)) {
+                isValid = false;
+                highlightError(email, 'Please enter a valid email address');
+            } else {
+                removeErrorHighlight(email);
+            }
+            
+            // Validate password if provided
+            if (password.value.trim() !== '' && password.value.length < 8) {
+                isValid = false;
+                highlightError(password, 'Password must be at least 8 characters long');
+            } else {
+                removeErrorHighlight(password);
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+        
+        function highlightError(element, message) {
+            element.classList.add('is-invalid');
+            
+            // Remove existing error message if any
+            const existingError = element.nextElementSibling;
+            if (existingError && existingError.classList.contains('invalid-feedback')) {
+                existingError.remove();
+            }
+            
+            // Add error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            errorDiv.textContent = message;
+            element.parentNode.appendChild(errorDiv);
+        }
+        
+        function removeErrorHighlight(element) {
+            element.classList.remove('is-invalid');
+            
+            // Remove error message
+            const errorDiv = element.nextElementSibling;
+            if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                errorDiv.remove();
+            }
+        }
+        
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+    });
+</script>
+{% endblock %}

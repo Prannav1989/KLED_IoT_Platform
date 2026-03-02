@@ -1,0 +1,172 @@
+{% extends "superadmin_dashboard/base.html" %}
+
+{% block title %}Add New Device{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i>Add New Device
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('superadmin.create_device') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="name" class="form-label">Device Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                    <small class="form-text text-muted">A descriptive name for this device</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="device_id" class="form-label">Device ID (EUI) *</label>
+                                    <input type="text" class="form-control" id="device_id" name="device_id" required>
+                                    <small class="form-text text-muted">Unique device identifier</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="mqtt_topic" class="form-label">MQTT Topic</label>
+                                    <input type="text" class="form-control" id="mqtt_topic" name="mqtt_topic">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="mqtt_config_id" class="form-label">MQTT Configuration</label>
+                                    <select class="form-control" id="mqtt_config_id" name="mqtt_config_id">
+                                        <option value="">-- Select MQTT Config --</option>
+                                        {% for config in mqtt_configs %}
+                                        <option value="{{ config.id }}">{{ config.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="company_id" class="form-label">Company</label>
+                                    <select class="form-control" id="company_id" name="company_id">
+                                        <option value="">-- Select Company --</option>
+                                        {% for company in companies %}
+                                        <option value="{{ company.id }}">{{ company.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="user_id" class="form-label">Owner</label>
+                                    <select class="form-control" id="user_id" name="user_id">
+                                        <option value="">-- Select Owner --</option>
+                                        {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SENSOR MODEL SELECTION -->
+                        <div class="form-group mb-3">
+                            <label for="sensor_model_id" class="form-label">Sensor Model</label>
+                            <select class="form-control" id="sensor_model_id" name="sensor_model_id">
+                                <option value="">-- Select Sensor Model --</option>
+                                {% for model in sensor_models %}
+                                <option value="{{ model.id }}" data-parameters='{{ model.parameters|tojson|safe }}'>
+                                    {{ model.name }} ({{ model.manufacturer }}) - {{ (model.parameters|length if model.parameters else 0) }} parameters
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">Select a sensor model to auto-create sensors</small>
+                        </div>
+
+                        <!-- MODEL PARAMETERS PREVIEW -->
+                        <div id="model-preview" class="mb-3" style="display: none;">
+                            <div class="alert alert-info">
+                                <h5 class="alert-heading">Model Parameters Preview</h5>
+                                <div id="parameters-list"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                            <label class="form-check-label" for="is_active">
+                                Device is active
+                            </label>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('superadmin.device_management') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Device
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('sensor_model_id').addEventListener('change', function() {
+    const preview = document.getElementById('model-preview');
+    const list = document.getElementById('parameters-list');
+    const selected = this.options[this.selectedIndex];
+    
+    if (selected.value) {
+        try {
+            const parameters = JSON.parse(selected.getAttribute('data-parameters') || '[]');
+            if (parameters.length > 0) {
+                let html = `<p>This model contains ${parameters.length} parameters:</p><ul class="mb-0">`;
+                parameters.forEach(param => {
+                    const paramName = param.parameter_name || param.name || 'Unnamed';
+                    const paramType = param.parameter_type || param.type || 'numeric';
+                    const paramUnit = param.unit || 'N/A';
+                    const mqttField = param.mqtt_field_name || param.field || 'N/A';
+                    
+                    html += `<li>
+                        <strong>${paramName}</strong> 
+                        <span class="badge bg-secondary ms-2">${paramType}</span>
+                        <span class="badge bg-info ms-1">${paramUnit}</span>
+                        <small class="text-muted ms-2">MQTT: ${mqttField}</small>
+                    </li>`;
+                });
+                html += '</ul>';
+                list.innerHTML = html;
+                preview.style.display = 'block';
+            } else {
+                list.innerHTML = '<p class="mb-0">This model has no defined parameters.</p>';
+                preview.style.display = 'block';
+            }
+        } catch (error) {
+            list.innerHTML = '<p class="mb-0 text-danger">Error parsing parameters</p>';
+            preview.style.display = 'block';
+        }
+    } else {
+        preview.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

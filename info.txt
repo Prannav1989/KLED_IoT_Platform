@@ -1,0 +1,10 @@
+Username: admin
+Password: admin123
+
+
+USER 
+Username :- user    
+Password :- user12345
+
+Username: superadmin
+Password: admin123

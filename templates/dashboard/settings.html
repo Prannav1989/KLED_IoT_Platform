@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Include the header -->
+    {% include 'dashboard/header.html' %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-header bg-gradient text-white"
+                     style="background: linear-gradient(135deg, #76ecdd, #74ee92, #70f5b2);">
+                    <h5 class="card-title mb-0">Dashboard Settings</h5>
+                </div>
+
+                <div class="card-body">
+                    <!-- Dashboard Settings Form -->
+                    <form method="POST" action="{{ url_for('dashboard_settings.update_dashboard_settings', dashboard_id=dashboard.id) }}">
+                        {# removed: {{ form.hidden_tag() }}  #}
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Dashboard Name</label>
+                            <input type="text" name="name" id="name" class="form-control" value="{{ dashboard.name }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea name="description" id="description" class="form-control">{{ dashboard.description }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="refresh_interval" class="form-label">Refresh Interval (seconds)</label>
+                            <input type="number" name="refresh_interval" id="refresh_interval" class="form-control"
+                                   value="{{ dashboard.refresh_interval or 30 }}" min="5">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                        <a href="{{ url_for('dashboard.view_dashboard', dashboard_id=dashboard.id) }}" class="btn btn-secondary ms-2">Back to Dashboard</a>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- Linked Devices Section -->
+                    <h5>Linked Devices</h5>
+                    {% if linked_sensors %}
+                        <ul class="list-group mb-4">
+                            {% for s in linked_sensors %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ s.device.name if s.device else 'Unknown Device' }}
+                                    <form method="POST"
+                                          action="{{ url_for('dashboard_settings.remove_device_from_dashboard',
+                                                             dashboard_id=dashboard.id,
+                                                             device_id=s.device_id) }}"
+                                          style="display:inline;">
+                                        {# removed: {{ form.hidden_tag() }} #}
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </form>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No devices linked to this dashboard yet.</p>
+                    {% endif %}
+
+                    <!-- Add Device Section -->
+                    <h5>Add Device</h5>
+                    <form method="POST" action="{{ url_for('dashboard_settings.add_device_to_dashboard', dashboard_id=dashboard.id) }}">
+                        {# removed: {{ form.hidden_tag() }} #}
+                        <div class="input-group">
+                            <select name="device_id" class="form-select" required>
+                                <option value="">Select Device</option>
+                                {% for s in available_sensors %}
+                                    <option value="{{ s.id }}">{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-plus-circle"></i> Add Device
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

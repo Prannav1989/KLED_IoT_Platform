@@ -1,0 +1,8 @@
+venv311/
+__pycache__/
+build/
+dist/
+*.log
+*.db
+.env
+Creat EXE/git add .

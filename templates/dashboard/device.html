@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <!-- Include Header -->
+    {% include 'dashboard/header.html' %}
+
+    <!-- Devices Section -->
+    <div class="row" id="devices-section">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-microchip text-primary mr-2"></i>
+                            Connected Devices
+                        </h5>
+                        <span class="badge badge-primary badge-pill">{{ devices|length }} devices</span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    {% if devices %}
+                    <div class="row">
+                        {% for device in devices %}
+                        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                            <div class="card device-card h-100 shadow-sm border-{% if device.status == 'online' %}success{% else %}secondary{% endif %}">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 text-truncate">
+                                        <i class="fas fa-microchip mr-2 text-primary"></i>
+                                        {{ device.name }}
+                                    </h6>
+                                    <span class="badge badge-{% if device.status == 'online' %}success{% else %}secondary{% endif %} badge-pill">
+                                        <i class="fas fa-circle fa-xs mr-1"></i>
+                                        {{ device.status|title }}
+                                    </span>
+                                </div>
+                                
+                                <div class="card-body">
+                                    <div class="device-info">
+                                        <div class="row mb-2">
+                                            <div class="col-5 text-muted">Device ID:</div>
+                                            <div class="col-7 font-weight-bold">{{ device.device_id or 'N/A' }}</div>
+                                        </div>
+                                        
+                                        <div class="row mb-2">
+                                            <div class="col-5 text-muted">Location:</div>
+                                            <div class="col-7">
+                                                {% if device.current_location and device.current_location != "Unknown" %}
+                                                <i class="fas fa-map-marker-alt text-danger mr-1"></i>
+                                                {{ device.current_location }}
+                                                {% else %}
+                                                <span class="text-muted">Unknown</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-2">
+                                            <div class="col-5 text-muted">Last Reading:</div>
+                                            <div class="col-7">
+                                                {% if device.last_reading_time %}
+                                                <small class="text-{% if device.status == 'online' %}success{% else %}muted{% endif %}">
+                                                    {{ device.last_reading_time.strftime('%Y-%m-%d %H:%M') }}
+                                                </small>
+                                                {% else %}
+                                                <small class="text-muted">No data</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-2">
+                                            <div class="col-5 text-muted">Status:</div>
+                                            <div class="col-7">
+                                                <span class="badge badge-{% if device.is_active %}success{% else %}warning{% endif %}">
+                                                    {{ 'Active' if device.is_active else 'Inactive' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer bg-white border-top">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            Added: {{ device.created_at.strftime('%Y-%m-%d') if device.created_at else 'Unknown' }}
+                                        </small>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('analytics.analytics_page', dashboard_id=dashboard.id, device_id=device.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="View Analytics">
+                                                <i class="fas fa-chart-line"></i>
+                                            </a>
+                                            <a href="{{ url_for('report_bp.reports', dashboard_id=dashboard.id) }}?device_ids[]={{ device.id }}" 
+                                               class="btn btn-sm btn-outline-info" 
+                                               title="Generate Report">
+                                                <i class="fas fa-file-alt"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-microchip fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Devices Connected</h5>
+                        <p class="text-muted">There are no devices linked to this dashboard yet.</p>
+                        {% if current_user.role in ['admin', 'super_admin'] %}
+                        <a href="{{ url_for('dashboard_settings.dashboard_settings', dashboard_id=dashboard.id) }}#devices" 
+                           class="btn btn-primary">
+                            <i class="fas fa-plus mr-2"></i>Add Devices
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Card -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="border-right pr-3">
+                                <h3 class="text-primary mb-1">{{ devices|length }}</h3>
+                                <small class="text-muted">Total Devices</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="border-right pr-3">
+                                <h3 class="text-success mb-1">{{ devices|selectattr('status', 'equalto', 'online')|list|length }}</h3>
+                                <small class="text-muted">Online Now</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="border-right pr-3">
+                                <h3 class="text-warning mb-1">{{ devices|selectattr('is_active', 'equalto', false)|list|length }}</h3>
+                                <small class="text-muted">Inactive</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="">
+                                <h3 class="text-info mb-1">
+                                    {% set devices_with_data = devices|selectattr('last_reading_time')|list %}
+                                    {{ devices_with_data|length }}
+                                </h3>
+                                <small class="text-muted">With Data</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Styles -->
+<style>
+.device-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid;
+}
+
+.device-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.device-card.online {
+    border-left-color: #28a745;
+}
+
+.device-card.offline {
+    border-left-color: #6c757d;
+}
+
+.badge-pill {
+    font-size: 0.7rem;
+}
+
+.device-info .row {
+    border-bottom: 1px solid #f8f9fa;
+    padding: 4px 0;
+}
+
+.device-info .row:last-child {
+    border-bottom: none;
+}
+
+.btn-group .btn {
+    border-radius: 0.25rem;
+    margin-left: 2px;
+}
+</style>
+
+<!-- Script for auto-refresh -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh device status every 30 seconds
+    function refreshDeviceStatus() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.click();
+        }
+    }
+    
+    // Refresh every 30 seconds
+    setInterval(refreshDeviceStatus, 30000);
+    
+    // Add click animation to device cards
+    const deviceCards = document.querySelectorAll('.device-card');
+    deviceCards.forEach(card => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', function(e) {
+            // Don't trigger if clicking on buttons
+            if (!e.target.closest('a') && !e.target.closest('button')) {
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

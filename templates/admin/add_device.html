@@ -1,0 +1,168 @@
+<!-- templates/admin/add_device.html -->
+{% extends "superadmin_dashboard/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add New Device</h2>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Device Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.name.label(class="form-label") }}
+                                    {{ form.name(class="form-control", placeholder="Enter device name") }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.device_id.label(class="form-label") }}
+                                    {{ form.device_id(class="form-control", placeholder="Enter device ID") }}
+                                    {% if form.device_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.device_id.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.mqtt_topic.label(class="form-label") }}
+                                    {{ form.mqtt_topic(class="form-control", placeholder="Enter MQTT topic") }}
+                                    {% if form.mqtt_topic.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.mqtt_topic.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.mqtt_config_id.label(class="form-label") }}
+                                    {% if form.mqtt_config_id.choices %}
+                                        {{ form.mqtt_config_id(class="form-select") }}
+                                        <small class="text-muted">Select MQTT configuration</small>
+                                    {% else %}
+                                        <select class="form-select" disabled>
+                                            <option>No MQTT configurations available</option>
+                                        </select>
+                                        <small class="text-danger">
+                                            No MQTT configurations found. 
+                                            <a href="{{ url_for('admin.mqtt_configs') }}">Create one first</a>
+                                        </small>
+                                    {% endif %}
+                                    {% if form.mqtt_config_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.mqtt_config_id.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.user_id.label(class="form-label") }}
+                                    {% if form.user_id.choices %}
+                                        {{ form.user_id(class="form-select") }}
+                                        <small class="text-muted">{{ form.user_id.choices|length }} user(s) available</small>
+                                    {% else %}
+                                        <select class="form-select" disabled>
+                                            <option>No users available</option>
+                                        </select>
+                                        <small class="text-danger">
+                                            No active users found. 
+                                            <a href="{{ url_for('admin.activate_users') }}">Click here to activate all users</a>
+                                        </small>
+                                    {% endif %}
+                                    {% if form.user_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.user_id.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.company_id.label(class="form-label") }}
+                                    {% if form.company_id.choices %}
+                                        {{ form.company_id(class="form-select") }}
+                                        <small class="text-muted">Assign device to a company (optional)</small>
+                                    {% else %}
+                                        <select class="form-select" disabled>
+                                            <option>No companies available</option>
+                                        </select>
+                                        <small class="text-danger">
+                                            No companies found. 
+                                            <a href="{{ url_for('admin.add_company') }}">Create one first</a>
+                                        </small>
+                                    {% endif %}
+                                    {% if form.company_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.company_id.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('admin.manage_devices') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Help Section -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Help</h6>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">
+                        <strong>Device Name:</strong> Descriptive name for the device.<br>
+                        <strong>Device ID:</strong> Unique identifier for the device.<br>
+                        <strong>MQTT Topic:</strong> Topic the device will publish/subscribe to.<br>
+                        <strong>Company:</strong> Assign device to a company for organization.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

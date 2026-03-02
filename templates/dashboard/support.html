@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow border-0 rounded-4 p-4 text-center">
+        <h3 class="text-primary mb-3">
+            <i class="fas fa-life-ring"></i> Help & Support
+        </h3>
+        <p class="lead mb-4">Our Support System is Coming Soon!</p>
+        <p class="text-muted">
+            We're working on a full-featured ticket system where you’ll be able to raise issues,
+            track responses, and get quick resolutions from our support team.
+        </p>
+        <hr class="my-4">
+        <p class="text-muted">
+            For now, you can reach us at:<br>
+            <strong>Email:</strong> service@kledmeasurement.com<br>
+            <!-- <strong>Phone:</strong> +91-XXXXXXXXXX -->
+        </p>
+        <a href="{{ url_for('dashboard.dashboard_list') }}" class="btn btn-outline-primary mt-3">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

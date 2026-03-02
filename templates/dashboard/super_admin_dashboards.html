@@ -1,0 +1,490 @@
+{% extends "superadmin_dashboard/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1"><i class="fas fa-cogs me-2 text-primary"></i>Super Admin Dashboard Management</h2>
+                    <p class="text-muted mb-0">Manage all dashboards across all companies</p>
+                </div>
+                <a href="{{ url_for('dashboard.create_dashboard') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-1"></i>Create New Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Companies</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ companies|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Dashboards</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_dashboards }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total IoT Devices
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_iot_sensors }}</div>
+
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-microchip fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Total Admins</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_admins }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Companies Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-building me-2"></i>Companies Management</h5>
+                    <span class="badge bg-light text-primary">{{ companies|length }} companies</span>
+                </div>
+                <div class="card-body">
+                    {% if companies %}
+                    <div class="row">
+                        {% for company in companies %}
+                        <div class="col-xl-4 col-md-6 mb-4">
+                            <div class="card border-left-primary shadow h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="card-title text-primary">{{ company.name }}</h5>
+                                        <span class="badge bg-primary">{{ company.dashboards|length }} dashboards</span>
+                                    </div>
+                                    <p class="card-text text-muted small mb-3">{{ company.description or 'No description
+                                        provided' }}</p>
+
+                                    <div class="company-stats mb-3">
+                                        <div class="d-flex justify-content-between small text-muted">
+                                            <span><i class="fas fa-users me-1"></i> {{ company.admins|length }}
+                                                admins</span>
+                                            <span><i class="fas fa-calendar me-1"></i> Created: {{
+                                                company.created_at.strftime('%Y-%m-%d') if company.created_at else 'N/A'
+                                                }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <a href="{{ url_for('dashboard.company_dashboard', company_id=company.id) }}"
+                                            class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-tachometer-alt me-1"></i>View Dashboards
+                                        </a>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fas fa-cog"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#"><i
+                                                            class="fas fa-edit me-2"></i>Edit Company</a></li>
+                                                <li><a class="dropdown-item" href="#"><i
+                                                            class="fas fa-users me-2"></i>Manage Admins</a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#"><i
+                                                            class="fas fa-trash me-2"></i>Delete Company</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-building fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No companies found</h5>
+                        <p class="text-muted mb-4">There are no companies registered in the system yet.</p>
+                        <a href="{{ url_for('company.create_company') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Create First Company
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Dashboards Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>All Dashboards</h5>
+                    <span class="badge bg-light text-success">{{ dashboards|length }} dashboards</span>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter Bar -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="dashboardSearch" class="form-control"
+                                    placeholder="Search dashboards...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="companyFilter">
+                                <option value="">All Companies</option>
+                                {% for company in companies %}
+                                <option value="{{ company.name }}">{{ company.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="sortFilter">
+                                <option value="name">Sort by Name</option>
+                                <option value="company">Sort by Company</option>
+                                <option value="sensors">Sort by Sensors</option>
+                                <option value="recent">Most Recent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {% if dashboards %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="dashboardsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Company</th>
+                                    <th>Sensors</th>
+                                    <th>Status</th>
+                                    <th>Created By</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dashboard in dashboards %}
+                                <tr class="dashboard-row">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                                            <strong>{{ dashboard.name }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate" style="max-width: 200px;"
+                                            title="{{ dashboard.description or 'No description' }}">
+                                            {{ dashboard.description or 'No description' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ dashboard.company.name }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {% if dashboard_stats[dashboard.id] %}
+                                            {{ dashboard_stats[dashboard.id]['iot_sensor_count'] }} devices
+                                            {% else %}
+                                            0 devices
+                                            {% endif %}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        {% if dashboard.is_active %}
+                                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Active</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary"><i
+                                                class="fas fa-pause me-1"></i>Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-user-circle text-muted me-2"></i>
+                                            {{ dashboard.creator.username }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ dashboard.updated_at.strftime('%Y-%m-%d') if dashboard.updated_at else
+                                            'N/A' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('dashboard.view_dashboard', dashboard_id=dashboard.id) }}"
+                                                class="btn btn-outline-primary" title="View Dashboard"
+                                                data-bs-toggle="tooltip">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('dashboard.manage_dashboard', dashboard_id=dashboard.id) }}"
+                                                class="btn btn-outline-secondary" title="Manage Dashboard"
+                                                data-bs-toggle="tooltip">
+                                                <i class="fas fa-cog"></i>
+                                            </a>
+                                            <a href="{{ url_for('dashboard.edit_dashboard', dashboard_id=dashboard.id) }}"
+                                                class="btn btn-outline-warning" title="Edit Dashboard"
+                                                data-bs-toggle="tooltip">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form
+                                                action="{{ url_for('dashboard.delete_dashboard', dashboard_id=dashboard.id) }}"
+                                                method="post" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-outline-danger"
+                                                    onclick="return confirm('Are you sure you want to delete the dashboard \"
+                                                    {{ dashboard.name }}\"? This action cannot be undone.')"
+                                                    title="Delete Dashboard" data-bs-toggle="tooltip">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination (if needed in future) -->
+                    <nav aria-label="Dashboard pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-tachometer-alt fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No dashboards found</h5>
+                        <p class="text-muted mb-4">There are no dashboards created yet. Start by creating your first
+                            dashboard.</p>
+                        <a href="{{ url_for('dashboard.create_dashboard') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-1"></i>Create First Dashboard
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('dashboardSearch');
+        const companyFilter = document.getElementById('companyFilter');
+        const sortFilter = document.getElementById('sortFilter');
+        const dashboardRows = document.querySelectorAll('.dashboard-row');
+
+        function filterDashboards() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const companyValue = companyFilter.value.toLowerCase();
+
+            dashboardRows.forEach(row => {
+                const name = row.querySelector('strong').textContent.toLowerCase();
+                const description = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const company = row.querySelector('.badge.bg-primary').textContent.toLowerCase();
+                const sensors = row.querySelector('.badge.bg-info').textContent.toLowerCase();
+
+                const matchesSearch = name.includes(searchTerm) || description.includes(searchTerm) || sensors.includes(searchTerm);
+                const matchesCompany = companyValue === '' || company.includes(companyValue);
+
+                if (matchesSearch && matchesCompany) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        searchInput.addEventListener('input', filterDashboards);
+        companyFilter.addEventListener('change', filterDashboards);
+
+        // Sort functionality
+        sortFilter.addEventListener('change', function () {
+            const sortBy = this.value;
+            const table = document.getElementById('dashboardsTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr.dashboard-row'));
+
+            rows.sort((a, b) => {
+                let aValue, bValue;
+
+                switch (sortBy) {
+                    case 'name':
+                        aValue = a.querySelector('strong').textContent.toLowerCase();
+                        bValue = b.querySelector('strong').textContent.toLowerCase();
+                        return aValue.localeCompare(bValue);
+
+                    case 'company':
+                        aValue = a.querySelector('.badge.bg-primary').textContent.toLowerCase();
+                        bValue = b.querySelector('.badge.bg-primary').textContent.toLowerCase();
+                        return aValue.localeCompare(bValue);
+
+                    case 'sensors':
+                        aValue = parseInt(a.querySelector('.badge.bg-info').textContent);
+                        bValue = parseInt(b.querySelector('.badge.bg-info').textContent);
+                        return bValue - aValue;
+
+                    case 'recent':
+                        // Assuming you have a data attribute for date sorting
+                        aValue = new Date(a.querySelector('td:nth-child(7) small').textContent);
+                        bValue = new Date(b.querySelector('td:nth-child(7) small').textContent);
+                        return bValue - aValue;
+
+                    default:
+                        return 0;
+                }
+            });
+
+            // Remove existing rows and append sorted ones
+            rows.forEach(row => tbody.appendChild(row));
+        });
+
+        // Enhanced delete confirmation
+        document.querySelectorAll('form[action*="delete_dashboard"]').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                if (!confirm('Are you sure you want to delete this dashboard? This action cannot be undone.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 0.5rem;
+    }
+
+    .card-header {
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+    }
+
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #5a5c69;
+    }
+
+    .btn-group-sm>.btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .dashboard-row:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s;
+    }
+
+    .text-truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .btn-group .btn {
+            margin-bottom: 0.25rem;
+            border-radius: 0.25rem;
+        }
+
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+    }
+</style>
+{% endblock %}

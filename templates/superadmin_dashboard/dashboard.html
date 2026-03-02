@@ -1,0 +1,246 @@
+{% extends "superadmin_dashboard/base.html" %}
+
+{% block title %}SuperAdmin Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1>SuperAdmin Dashboard</h1>
+    <p class="text-muted">System overview and latest activity</p>
+</div>
+
+<!-- ===================== OVERVIEW STATS ===================== -->
+<div class="row mb-4">
+
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value">{{ stats.total_users or 0 }}</div>
+                    <div class="stat-label text-muted">Total Users</div>
+                </div>
+                <div class="stat-icon text-primary">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value">{{ stats.active_devices or 0 }}</div>
+                    <div class="stat-label text-muted">Active Devices</div>
+                </div>
+                <div class="stat-icon text-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value">
+                        {{ (stats.total_devices or 0) - (stats.active_devices or 0) }}
+                    </div>
+                    <div class="stat-label text-muted">Inactive Devices</div>
+                </div>
+                <div class="stat-icon text-danger">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===================== USERS & DEVICES ===================== -->
+<div class="row">
+
+    <!-- Users -->
+    <div class="col-xl-6 mb-4">
+        <div class="table-card h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2 text-info"></i>Users
+                </h5>
+                <a href="{{ url_for('superadmin.manage_users') }}"
+                   class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for user in recent_users %}
+                            <tr>
+                                <td>
+                                    <strong>{{ user.username }}</strong><br>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </td>
+                                <td>{{ user.role|title }}</td>
+                                <td>
+                                    <span class="status-dot {{ 'bg-success' if user.active_status else 'bg-danger' }}"></span>
+                                </td>
+                                <td>{{ user.created_at.strftime('%b %d, %Y') if user.created_at else 'N/A' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">No users found</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Devices -->
+    <div class="col-xl-6 mb-4">
+        <div class="table-card h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-microchip me-2 text-warning"></i>Devices
+                </h5>
+                <a href="{{ url_for('superadmin.device_management') }}"
+                   class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Device</th>
+                                <th>Status</th>
+                                <th>Owner</th>
+                                <th>Added</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for device in recent_devices %}
+                            <tr>
+                                <td>
+                                    <strong>{{ device.name or 'Unnamed' }}</strong><br>
+                                    <small class="text-muted">{{ device.device_id }}</small>
+                                </td>
+                                <td>
+                                    <span class="status-dot {{ 'bg-success' if device.is_active else 'bg-danger' }}"></span>
+                                </td>
+                                <td>{{ device.owner or 'System' }}</td>
+                                <td>{{ device.created_at.strftime('%b %d') if device.created_at else 'N/A' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">No devices found</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===================== SENSOR DATA ===================== -->
+<div class="row">
+    <div class="col-12">
+        <div class="table-card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-database me-2 text-success"></i>Sensor Data
+                </h5>
+                <span class="badge bg-success">{{ recent_sensor_data|length }}</span>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Device Name</th>
+                                <th>Parameter</th>
+                                <th>Value</th>
+                                <th>Unit</th>
+                                <th>Timestamp</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for data_tuple in recent_sensor_data %}
+                            {# data_tuple contains: [0]=SensorData object, [1]=sensor_name, [2]=unit, [3]=device_id, [4]=device_name #}
+                            {% set sensor_data = data_tuple[0] %}
+                            {% set sensor_name = data_tuple[1] %}
+                            {% set unit = data_tuple[2] %}
+                            {% set device_id = data_tuple[3] %}
+                            {% set device_name = data_tuple[4] %}
+                            
+                            <tr>
+                                <td>{{ device_name or device_id or 'Unknown' }}</td>
+                                <td>{{ sensor_name or 'Unknown Sensor' }}</td>
+                                <td class="fw-bold text-primary">
+                                    {{ sensor_data.value if sensor_data and sensor_data.value is not none else 'N/A' }}
+                                </td>
+                                <td>{{ unit or '-' }}</td>
+                                <td data-ts="{% if sensor_data and sensor_data.timestamp %}{{ sensor_data.timestamp.isoformat() }}{% endif %}">
+                                    {% if sensor_data and sensor_data.timestamp %}
+                                        {{ sensor_data.timestamp.strftime('%b %d, %H:%M') }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-dot bg-secondary sensor-status"></span>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="6" class="text-center text-muted py-4">No data available</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/superadmin_dashboard.css') }}">
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("td[data-ts]").forEach(cell => {
+        const ts = cell.getAttribute("data-ts");
+        const statusDot = cell.parentElement.querySelector(".sensor-status");
+
+        if (!ts || !statusDot) return;
+
+        const diff = (Date.now() - new Date(ts)) / 1000;
+
+        if (diff < 300) {
+            statusDot.className = "status-dot bg-success sensor-status";
+            statusDot.title = "Online";
+        } else if (diff < 1800) {
+            statusDot.className = "status-dot bg-warning sensor-status";
+            statusDot.title = "Delayed";
+        } else {
+            statusDot.className = "status-dot bg-danger sensor-status";
+            statusDot.title = "Offline";
+        }
+    });
+});
+</script>
+{% endblock %}

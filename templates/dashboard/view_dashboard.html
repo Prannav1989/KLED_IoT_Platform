@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}{{ dashboard.name }} - IoT Dashboard{% endblock %}
+{% block content %}
+{% include "dashboard/header.html" %}
+
+<!-- Last Update Indicator -->
+<div class="row mb-3">
+    <div class="col-12">
+        <small class="text-muted">
+            <i class="fas fa-clock"></i> Last updated: <span id="lastUpdate">Just now</span>
+        </small>
+    </div>
+</div>
+
+<!-- Dashboard Stats -->
+<div class="row mb-4">
+    <!-- Linked Devices -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Linked Devices
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_devices }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-microchip fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Devices -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Active Devices
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_devices }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-wifi fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parameters Monitored -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Parameters Monitored
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_parameters }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Readings -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Current Readings
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_readings }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-database fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Devices Grid -->
+<div class="row" id="sensorGrid">
+    {% if devices_data and devices_data|length > 0 %}
+        {% for device_info in devices_data %}
+        {% set param_count = device_info.parameters|length if device_info.parameters else 0 %}
+        <div class="col-xl-6 col-lg-12 mb-4">
+            <div class="card device-card shadow-sm h-100">
+                <div class="card-header py-2 px-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-microchip mr-2 text-primary"></i>
+                        <h6 class="m-0 font-weight-bold text-truncate">{{ device_info.device.name }}</h6>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge badge-{{ 'success' if device_info.is_active else 'secondary' }} badge-sm mr-2">
+                            {{ 'Active' if device_info.is_active else 'Inactive' }}
+                        </span>
+                        <small class="text-muted text-nowrap">
+                            <i class="fas fa-clock mr-1"></i>{{ device_info.last_seen or 'Never' }}
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="card-body p-3">
+                    {% if device_info.parameters and device_info.parameters|length > 0 %}
+                    <!-- Responsive grid for parameters -->
+                    <div class="row g-2">
+                        {% for param_key, param_data in device_info.parameters.items() %}
+                        <!-- Responsive columns: 1 column on xs, 2 on sm, 3 on md, 4 on lg -->
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                            <div class="parameter-card h-100 p-2 border rounded text-center">
+                                <div class="parameter-icon mb-2">
+                                    <i class="fas fa-{{ get_sensor_icon(param_data.parameter_type) }} fa-lg text-primary"></i>
+                                </div>
+                                <div class="parameter-label small text-truncate mb-1">
+                                    {{ param_data.sensor_name|title }}
+                                </div>
+                                <div class="parameter-value font-weight-bold">
+                                    {{ param_data.value }}
+                                </div>
+                                <div class="parameter-unit small text-muted">
+                                    {{ param_data.unit }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="no-data-message text-center py-3">
+                        <i class="fas fa-exclamation-triangle fa-lg text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No sensor data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-tachometer-alt fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No devices linked to this dashboard</h4>
+                    <p class="text-muted">Add devices to this dashboard to start monitoring</p>
+                    {% if current_user.role in ['admin', 'super_admin'] %}
+                    <a href="{{ url_for('dashboard.manage_dashboard', dashboard_id=dashboard.id) }}" class="btn btn-primary">
+                        <i class="fas fa-plus mr-2"></i> Manage Dashboard
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Store dashboard data for JS -->
+<script type="application/json" id="dashboardData">
+{
+    "device_count": {{ devices_data|length if devices_data is defined else 0 }},
+    "dashboard_id": {{ dashboard.id if dashboard else 0 }},
+    "user_role": "{{ current_user.role }}",
+    "navigation_settings": {{ navigation_settings|tojson|safe }}
+}
+</script>
+{% endblock %}
+
+{% block scripts %}
+<link href="{{ url_for('static', filename='css/view_dashboard.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/graphical_data.css') }}" rel="stylesheet">
+<script src="{{ url_for('static', filename='js/dashboard_main.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,32 @@
+/* Highlight active nav link */
+.navbar .nav-link.active,
+.navbar-brand.active,
+.navbar .dropdown-toggle.active {
+    color: #56b0e4 !important;   /* Highlighted blue */
+    font-weight: 600;
+    border-bottom: 2px solid #ffffff;  /* Subtle underline */
+}
+
+/* Hover effect */
+.navbar .nav-link:hover,
+.navbar .dropdown-toggle:hover {
+    color: #b8c4da !important;
+}
+
+/* Dropdown active link highlight */
+.dropdown-menu .dropdown-item.active {
+    background-color: #56b0e4 !important;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+/* Dropdown hover effect */
+.dropdown-menu .dropdown-item:hover {
+    background-color: #2c3e50 !important;
+    color: #fff !important;
+}
+
+/* Navbar brand hover */
+.navbar-brand:hover {
+    color: #b8c4da !important;
+}

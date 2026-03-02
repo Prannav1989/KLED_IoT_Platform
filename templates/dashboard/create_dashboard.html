@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Create New Dashboard</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('dashboard.create_dashboard') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <!-- Dashboard Name -->
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Dashboard Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   placeholder="Enter dashboard name" required maxlength="100">
+                            <div class="form-text">Give your dashboard a descriptive name (e.g., "Factory Floor Monitoring")</div>
+                        </div>
+
+                        <!-- Dashboard Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="3" placeholder="Describe what this dashboard will display"></textarea>
+                            <div class="form-text">Optional description of the dashboard's purpose</div>
+                        </div>
+
+                        <!-- Company Selection (Super Admin Only) -->
+                        {% if current_user.role == 'super_admin' %}
+                        <div class="mb-3">
+                            <label for="company_id" class="form-label">Company <span class="text-danger">*</span></label>
+                            <select class="form-select" id="company_id" name="company_id" required>
+                                <option value="">Select a company</option>
+                                {% for company in companies %}
+                                <option value="{{ company.id }}">{{ company.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select which company this dashboard belongs to</div>
+                        </div>
+                        {% else %}
+                        <input type="hidden" name="company_id" id="company_id" value="{{ current_user.company_id }}">
+                        <div class="mb-3">
+                            <label class="form-label">Company</label>
+                            <div class="form-control bg-light">
+                                <strong>{{ current_user.company.name }}</strong>
+                            </div>
+                            <div class="form-text">This dashboard will be created for your company</div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Device Selection Section -->
+                        <div class="mb-4">
+                            <label class="form-label">Select Devices for Dashboard <span class="text-danger">*</span></label>
+                            <div class="card bg-light">
+                                <div class="card-body" id="devices-container">
+                                    {% if current_user.role != 'super_admin' %}
+                                        <!-- Initial load for non-super admins -->
+                                        <div id="devices-list">
+                                            {% if devices %}
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="select-all-devices">
+                                                        <label class="form-check-label fw-bold" for="select-all-devices">
+                                                            Select All Devices
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th width="50px">Select</th>
+                                                                <th>Device Name</th>
+                                                                <th>Type</th>
+                                                                <th>Location</th>
+                                                                <th>Sensors</th>
+                                                                <th>Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for device in devices %}
+                                                            <tr>
+                                                                <td>
+                                                                    <input type="checkbox" class="form-check-input device-checkbox" 
+                                                                           name="selected_devices" value="{{ device.id }}"
+                                                                           id="device-{{ device.id }}">
+                                                                </td>
+                                                                <td>
+                                                                    <label for="device-{{ device.id }}">
+                                                                        <i class="fas fa-microchip me-1 text-primary"></i>
+                                                                        <strong>{{ device.name }}</strong>
+                                                                    </label>
+                                                                </td>
+                                                                <td>{{ device.device_type or 'N/A' }}</td>
+                                                                <td>{{ device.location or 'N/A' }}</td>
+                                                                <td>
+                                                                    <span class="badge bg-info">{{ device.parameters.count() }} sensors</span>
+                                                                </td>
+                                                                <td>
+                                                                    {% if device.is_active %}
+                                                                        <span class="badge bg-success">Active</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">Inactive</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            {% else %}
+                                            <p class="text-muted mb-0">No devices available for your company.</p>
+                                            <small class="text-muted">
+                                                You need to have devices configured before creating dashboards.
+                                            </small>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <!-- For super admins - show prompt to select company -->
+                                        <div id="devices-list" class="text-center py-3">
+                                            <i class="fas fa-building fa-2x text-muted mb-2"></i>
+                                            <p class="text-muted mb-0">Please select a company to view available devices</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Selected Devices Count -->
+                            <div class="mt-2">
+                                <small class="text-muted" id="device-count">
+                                    {% if current_user.role != 'super_admin' %}
+                                        {% if devices %}
+                                            <span id="selected-count">0</span> of {{ devices|length }} device(s) selected
+                                        {% else %}
+                                            No devices available
+                                        {% endif %}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('dashboard.dashboard_list') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Dashboards
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submit-btn" {% if not devices and current_user.role != 'super_admin' %}disabled{% endif %}>
+                                <i class="fas fa-save me-1"></i>Create Dashboard
+                            </button>
+                        </div>
+
+                        {% if not devices and current_user.role != 'super_admin' %}
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>No devices available!</strong> You need to configure devices before creating dashboards. 
+                            <a href="{{ url_for('device.devices') }}" class="alert-link">Go to Devices</a> to set up devices first.
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const companySelect = document.getElementById('company_id');
+    const devicesContainer = document.getElementById('devices-container');
+    const deviceCount = document.getElementById('device-count');
+    const submitBtn = document.getElementById('submit-btn');
+    let totalDevices = 0;
+    
+    // Form validation for name field
+    const nameInput = document.getElementById('name');
+    nameInput.addEventListener('input', function() {
+        if (this.value.length > 100) {
+            this.value = this.value.substring(0, 100);
+        }
+    });
+    
+    // Load devices when company selection changes (for super admins)
+    if (companySelect && companySelect.tagName === 'SELECT') {
+        companySelect.addEventListener('change', function() {
+            const companyId = this.value;
+            
+            if (!companyId) {
+                devicesContainer.innerHTML = `
+                    <div id="devices-list" class="text-center py-3">
+                        <i class="fas fa-building fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Please select a company to view available devices</p>
+                    </div>
+                `;
+                deviceCount.innerHTML = '';
+                submitBtn.disabled = true;
+                return;
+            }
+            
+            // Show loading state
+            devicesContainer.innerHTML = `
+                <div class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    <span class="text-muted">Loading devices...</span>
+                </div>
+            `;
+            
+            // Fetch devices for selected company
+            fetch(`/dashboard/api/companies/${companyId}/devices`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch devices');
+                    }
+                    return response.json();
+                })
+                .then(devices => {
+                    updateDevicesDisplay(devices);
+                    updateSubmitButton(devices.length > 0);
+                })
+                .catch(error => {
+                    console.error('Error fetching devices:', error);
+                    devicesContainer.innerHTML = `
+                        <div class="text-center py-3 text-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span>Failed to load devices. Please try again.</span>
+                        </div>
+                    `;
+                    deviceCount.innerHTML = '<small class="text-danger">Error loading devices</small>';
+                    submitBtn.disabled = true;
+                });
+        });
+    }
+    
+    function updateDevicesDisplay(devices) {
+        if (!devices || devices.length === 0) {
+            devicesContainer.innerHTML = `
+                <div id="devices-list">
+                    <p class="text-muted mb-0">No devices available for this company.</p>
+                    <small class="text-muted">
+                        This company needs to have devices configured before creating dashboards.
+                    </small>
+                </div>
+            `;
+            deviceCount.innerHTML = '<small class="text-warning">No devices available</small>';
+            totalDevices = 0;
+            updateSelectedCount();
+            return;
+        }
+        
+        if (!Array.isArray(devices)) {
+            devicesContainer.innerHTML = `
+                <div class="text-center py-3 text-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span>Invalid data received from server.</span>
+                </div>
+            `;
+            return;
+        }
+        
+        totalDevices = devices.length;
+        
+        let devicesHTML = `
+            <div id="devices-list">
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="select-all-devices">
+                        <label class="form-check-label fw-bold" for="select-all-devices">
+                            Select All Devices
+                        </label>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th width="50px">Select</th>
+                                <th>Device Name</th>
+                                <th>Device ID</th>
+                                <th>MQTT Topic</th>
+                                <th>Status</th>
+                                <th>Sensors</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        devices.forEach(device => {
+            const deviceName = device.name || 'Unnamed Device';
+            const deviceId = device.device_id || 'N/A';
+            const mqttTopic = device.mqtt_topic || 'N/A';
+            const status = device.is_active ? 
+                '<span class="badge bg-success">Active</span>' : 
+                '<span class="badge bg-secondary">Inactive</span>';
+            const paramCount = device.parameters ? device.parameters.length : 0;
+            
+            devicesHTML += `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="form-check-input device-checkbox" 
+                               name="selected_devices" value="${device.id}"
+                               id="device-${device.id}">
+                    </td>
+                    <td>
+                        <label for="device-${device.id}">
+                            <i class="fas fa-microchip me-1 text-primary"></i>
+                            <strong>${deviceName}</strong>
+                        </label>
+                    </td>
+                    <td><code>${deviceId}</code></td>
+                    <td><small><code>${mqttTopic}</code></small></td>
+                    <td>${status}</td>
+                    <td>
+                        <span class="badge bg-info">${paramCount} sensors</span>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        devicesHTML += `
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        Selected devices will be linked to this dashboard
+                    </small>
+                </div>
+            </div>
+        `;
+        
+        devicesContainer.innerHTML = devicesHTML;
+        deviceCount.innerHTML = `<small class="text-success"><span id="selected-count">0</span> of ${totalDevices} device(s) selected</small>`;
+        
+        // Add event listeners for checkboxes
+        setupCheckboxEvents();
+    }
+    
+    function setupCheckboxEvents() {
+        const selectAllCheckbox = document.getElementById('select-all-devices');
+        const deviceCheckboxes = document.querySelectorAll('.device-checkbox');
+        
+        // Select All functionality
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                deviceCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateSelectedCount();
+            });
+        }
+        
+        // Individual checkbox functionality
+        deviceCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+    }
+    
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.device-checkbox:checked').length;
+        const selectedCountElement = document.getElementById('selected-count');
+        if (selectedCountElement) {
+            selectedCountElement.textContent = selectedCount;
+        }
+        
+        // Update select all checkbox state
+        const selectAllCheckbox = document.getElementById('select-all-devices');
+        if (selectAllCheckbox && totalDevices > 0) {
+            selectAllCheckbox.checked = selectedCount === totalDevices;
+            selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < totalDevices;
+        }
+        
+        // Enable/disable submit button based on selection
+        updateSubmitButton(selectedCount > 0);
+    }
+    
+    function updateSubmitButton(hasSelectedDevices) {
+        submitBtn.disabled = !hasSelectedDevices;
+        if (hasSelectedDevices) {
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i>Create Dashboard';
+        } else {
+            submitBtn.innerHTML = '<i class="fas fa-save me-1"></i>Select Devices to Continue';
+        }
+    }
+    
+    // Form submission validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const name = nameInput.value.trim();
+        const companyId = document.getElementById('company_id').value;
+        const selectedDevices = document.querySelectorAll('.device-checkbox:checked');
+        
+        if (!name) {
+            e.preventDefault();
+            alert('Please enter a dashboard name');
+            nameInput.focus();
+            return;
+        }
+        
+        if (!companyId) {
+            e.preventDefault();
+            alert('Please select a company');
+            if (companySelect) companySelect.focus();
+            return;
+        }
+        
+        if (selectedDevices.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one device for the dashboard');
+            return;
+        }
+    });
+    
+    // Initialize for non-super admin users
+    if (current_user.role != 'super_admin') {
+        setupCheckboxEvents();
+        updateSelectedCount();
+    }
+});
+</script>
+
+<style>
+.table-sm th, .table-sm td {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.form-text {
+    font-size: 0.875rem;
+}
+
+.form-check-input {
+    margin-top: 0;
+}
+
+.device-checkbox {
+    cursor: pointer;
+}
+</style>
+{% endblock %}

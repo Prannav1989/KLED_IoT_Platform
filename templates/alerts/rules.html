@@ -1,0 +1,723 @@
+{% extends "base.html" %}
+{% block title %}Alert Rules Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-bell me-2"></i>Alert Rules Management
+            </h1>
+            <p class="text-muted mb-0">Create and manage real-time alert rules for your IoT devices</p>
+        </div>
+<a href="{{ url_for('alerts.create_rule') }}" class="btn btn-primary">
+    <i class="fas fa-plus-circle me-2"></i>Create New Rule
+</a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Active Rules</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active_rules }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Triggers (24h)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.triggers_24h }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Device Coverage</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.device_coverage }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-microchip fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Action Success Rate</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.success_rate }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">All Alert Rules</h6>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                        id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-filter me-1"></i>Filter
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                    <li><a class="dropdown-item" href="?status=all">All Rules</a></li>
+                    <li><a class="dropdown-item" href="?status=enabled">Enabled Only</a></li>
+                    <li><a class="dropdown-item" href="?status=disabled">Disabled Only</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="?status=recent">Recently Triggered</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="rulesTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Device</th>
+                            <th>Parameter</th>
+                            <th>Condition</th>
+                            <th>Actions</th>
+                            <th>Status</th>
+                            <th>Last Triggered</th>
+                            <th>Operations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rule in rules %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="symbol symbol-40 symbol-light-primary me-3">
+                                        <span class="symbol-label">
+                                            <i class="fas fa-bell"></i>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <strong>{{ rule.name }}</strong>
+                                        {% if rule.description %}
+                                        <div class="text-muted small">{{ rule.description|truncate(50) }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="device-info">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-microchip me-1"></i>{{ rule.device_name }}
+                                    </span>
+                                    <div class="text-muted small">{{ rule.device_id_str or rule.device_id }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ rule.metric or rule.parameter_type }}</span>
+                                <div class="text-muted small">{{ rule.unit or '' }}</div>
+                            </td>
+                            <td>
+                                <code class="bg-light p-1 rounded">
+                                    {{ rule.metric or rule.parameter_type }} {{ rule.operator }} {{ rule.threshold }}{{ rule.unit or '' }}
+                                </code>
+                                <div class="text-muted small mt-1">
+                                    <i class="fas fa-history me-1"></i>Cooldown: {{ rule.cooldown_seconds }}s
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-icons">
+                                    {% if rule.action_types %}
+                                        {% if 'email' in rule.action_types %}
+                                        <span class="me-2" data-bs-toggle="tooltip" title="Email">
+                                            <i class="fas fa-envelope text-primary"></i>
+                                        </span>
+                                        {% endif %}
+                                        {% if 'sms' in rule.action_types %}
+                                        <span class="me-2" data-bs-toggle="tooltip" title="SMS">
+                                            <i class="fas fa-sms text-success"></i>
+                                        </span>
+                                        {% endif %}
+                                        {% if 'web' in rule.action_types %}
+                                        <span class="me-2" data-bs-toggle="tooltip" title="Web Notification">
+                                            <i class="fas fa-globe text-info"></i>
+                                        </span>
+                                        {% endif %}
+                                        {% if 'audio' in rule.action_types %}
+                                        <span class="me-2" data-bs-toggle="tooltip" title="Audio Alarm">
+                                            <i class="fas fa-volume-up text-warning"></i>
+                                        </span>
+                                        {% endif %}
+                                        {% if 'lorawan' in rule.action_types %}
+                                        <span class="me-2" data-bs-toggle="tooltip" title="LoRaWAN Downlink">
+                                            <i class="fas fa-satellite-dish text-danger"></i>
+                                        </span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ rule.action_types|length if rule.action_types else 0 }} actions</small>
+                            </td>
+                            <td>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input toggle-status" type="checkbox" 
+                                           data-rule-id="{{ rule.id }}" 
+                                           id="toggle{{ rule.id }}"
+                                           {% if rule.enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="toggle{{ rule.id }}">
+                                        {% if rule.enabled %}
+                                        <span class="badge bg-success">Enabled</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Disabled</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            </td>
+                            <td>
+                                {% if rule.last_triggered %}
+                                <span class="text-warning">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ rule.last_triggered|relative_time if rule.last_triggered is string else 'Recently' }}
+                                </span>
+                                <div class="text-muted small">
+                                    {{ rule.trigger_count or 0 }} times
+                                </div>
+                                {% else %}
+                                <span class="text-muted">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+<a href="{{ url_for('alerts.edit_rule_page', rule_id=rule.id) }}"
+   class="btn btn-outline-primary">
+    <i class="fas fa-edit"></i>
+</a>
+                                    <button type="button" class="btn btn-outline-info" 
+                                            onclick="testRule('{{ rule.id }}')">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" 
+                                            onclick="viewLogs('{{ rule.id }}')">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" 
+                                            onclick="deleteRule('{{ rule.id }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if pagination %}
+            <nav aria-label="Rules pagination">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pagination.prev_num }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page in pagination.iter_pages() %}
+                        {% if page %}
+                            <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pagination.next_num }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Create Rule Modal -->
+<div class="modal fade" id="createRuleModal" tabindex="-1" aria-labelledby="createRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createRuleModalLabel">Create New Alert Rule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createRuleForm" method="POST" action="{{ url_for('alerts.create_rule') }}">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Rule Basic Info -->
+                        <div class="col-md-6 mb-3">
+                            <label for="ruleName" class="form-label">Rule Name *</label>
+                            <input type="text" class="form-control" id="ruleName" name="name" required>
+                            <div class="form-text">Give your rule a descriptive name</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="ruleDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="ruleDescription" name="description" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Device Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Select Device *</label>
+                        <div class="row">
+                            {% for d in devices_data %}
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+<input class="form-check-input device-select"
+       type="radio"
+       name="device_id"
+       value="{{ d.id }}"
+       id="device{{ d.id }}"
+       data-company-id="{{ d.company_id }}"
+       data-params='{{ d.parameters | tojson | safe }}'>
+                                    <label class="form-check-label" for="device{{ d.id }}">
+                                        <strong>{{ d.name }}</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Parameter Selection -->
+                    <div class="mb-3" id="parameterSection" style="display: none;">
+                        <label class="form-label">Select Parameter *</label>
+                        <select class="form-select" id="parameterSelect" name="parameter_id" required>
+                            <option value="">Select a device first</option>
+                        </select>
+                    </div>
+
+                    <!-- Condition Settings -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Condition Settings</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="operator" class="form-label">Operator *</label>
+                                    <select class="form-select" id="operator" name="operator" required>
+                                        <option value=">">Greater Than (>)</option>
+                                        <option value="<">Less Than (<)</option>
+                                        <option value=">=">Greater Than or Equal (>=)</option>
+                                        <option value="<=">Less Than or Equal (<=)</option>
+                                        <option value="==">Equals (==)</option>
+                                        <option value="!=">Not Equals (!=)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="threshold" class="form-label">Threshold Value *</label>
+                                    <input type="number" step="any" class="form-control" 
+                                           id="threshold" name="threshold" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="cooldown" class="form-label">Cooldown (seconds)</label>
+                                    <input type="number" class="form-control" id="cooldown" 
+                                           name="cooldown_seconds" value="300" min="0">
+                                    <div class="form-text">Time between consecutive alerts</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Settings -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Alert Actions</h6>
+                            <small class="text-muted">Select actions to trigger when condition is met</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Email Action -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input action-toggle" type="checkbox" 
+                                               id="enableEmail" name="actions[]" value="email">
+                                        <label class="form-check-label" for="enableEmail">
+                                            <i class="fas fa-envelope text-primary me-2"></i>
+                                            <strong>Email Notification</strong>
+                                        </label>
+                                    </div>
+                                    <div class="ms-4 mt-2 action-config" id="emailConfig" style="display: none;">
+                                        <label class="form-label small">Recipients</label>
+                                        <select class="form-select form-select-sm" name="email_recipients[]" multiple>
+                                            {% for user in users %}
+                                            <option value="{{ user.email }}">{{ user.name }} ({{ user.email }})</option>
+                                            {% endfor %}
+                                        </select>
+                                        <label class="form-label small mt-2">Email Template</label>
+                                        <select class="form-select form-select-sm" name="email_template">
+                                            <option value="default">Default Alert Template</option>
+                                            <option value="critical">Critical Alert Template</option>
+                                            <option value="warning">Warning Template</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- SMS Action - UPDATED WITH PHONE NUMBERS DROPDOWN -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input action-toggle" type="checkbox" 
+                                               id="enableSMS" name="actions[]" value="sms">
+                                        <label class="form-check-label" for="enableSMS">
+                                            <i class="fas fa-sms text-success me-2"></i>
+                                            <strong>SMS Notification</strong>
+                                        </label>
+                                    </div>
+                                    <div class="ms-4 mt-2 action-config" id="smsConfig" style="display: none;">
+                                        <!-- Phone Numbers Selection -->
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Select Phone Numbers</label>
+                                            <select class="form-select form-select-sm" 
+                                                    name="sms_recipients[]" 
+                                                    multiple 
+                                                    size="4"
+                                                    aria-label="Select phone numbers to receive SMS alerts">
+                                                {% if phone_numbers %}
+                                                    {% for phone in phone_numbers %}
+                                                        {% if phone.is_active %}
+                                                        <option value="{{ phone.id }}" 
+                                                                {% if phone.verified %}data-verified="true"{% endif %}
+                                                                data-priority="{{ phone.priority }}">
+                                                            {{ phone.phone_number }}
+                                                            {% if phone.recipient_name %}
+                                                                - {{ phone.recipient_name }}
+                                                            {% endif %}
+                                                            {% if phone.recipient_role %}
+                                                                ({{ phone.recipient_role }})
+                                                            {% endif %}
+                                                            {% if not phone.verified %}
+                                                                ⚠️ Unverified
+                                                            {% endif %}
+                                                        </option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <option value="" disabled>No phone numbers available</option>
+                                                {% endif %}
+                                            </select>
+                                            <div class="form-text small">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Hold Ctrl/Cmd to select multiple numbers
+                                            </div>
+                                        </div>
+
+                                        <!-- SMS Template Selection -->
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">SMS Template</label>
+                                            <select class="form-select form-select-sm" name="sms_template">
+                                                <option value="default">Default Alert Template</option>
+                                                {% if sms_templates %}
+                                                    {% for template in sms_templates %}
+                                                        <option value="{{ template.id }}">
+                                                            {{ template.name }} - {{ template.template_type }}
+                                                        </option>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </select>
+                                        </div>
+
+                                        <!-- Custom Message Option -->
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="customSMSMessage" name="sms_custom_message">
+                                                <label class="form-check-label small" for="customSMSMessage">
+                                                    Use custom message
+                                                </label>
+                                            </div>
+                                            <textarea class="form-control form-control-sm mt-1" 
+                                                      name="sms_custom_text" 
+                                                      placeholder="Enter custom SMS message..."
+                                                      style="display: none;"
+                                                      rows="2"></textarea>
+                                        </div>
+
+                                        <!-- SMS Priority Override -->
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Priority Override (Optional)</label>
+                                            <select class="form-select form-select-sm" name="sms_priority">
+                                                <option value="">Use phone's default priority</option>
+                                                <option value="1">High Priority - Send Immediately</option>
+                                                <option value="2">Medium Priority</option>
+                                                <option value="3">Low Priority</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Quick Stats and Actions -->
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <div>
+                                                <span class="badge bg-info me-1">
+                                                    <i class="fas fa-phone me-1"></i>
+                                                    {{ phone_numbers|selectattr('is_active', 'equalto', true)|list|length }} Active
+                                                </span>
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    {{ phone_numbers|selectattr('verified', 'equalto', false)|list|length }} Unverified
+                                                </span>
+                                            </div>
+                                            <a href="{{ url_for('phone.list_phones') }}" 
+                                               class="btn btn-sm btn-outline-primary"
+                                               target="_blank">
+                                                <i class="fas fa-cog me-1"></i> Manage Numbers
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Web Notification -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input action-toggle" type="checkbox" 
+                                               id="enableWeb" name="actions[]" value="web" checked>
+                                        <label class="form-check-label" for="enableWeb">
+                                            <i class="fas fa-globe text-info me-2"></i>
+                                            <strong>Web Notification</strong>
+                                        </label>
+                                    </div>
+                                    <div class="ms-4 mt-2 action-config" id="webConfig">
+                                        <label class="form-label small">Notification Sound</label>
+                                        <select class="form-select form-select-sm" name="web_sound">
+                                            <option value="default">Default Sound</option>
+                                            <option value="alert">Alert Sound</option>
+                                            <option value="beep">Beep Sound</option>
+                                            <option value="none">No Sound</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Audio Alarm -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input action-toggle" type="checkbox" 
+                                               id="enableAudio" name="actions[]" value="audio">
+                                        <label class="form-check-label" for="enableAudio">
+                                            <i class="fas fa-volume-up text-warning me-2"></i>
+                                            <strong>Audio Alarm</strong>
+                                        </label>
+                                    </div>
+                                    <div class="ms-4 mt-2 action-config" id="audioConfig" style="display: none;">
+                                        <label class="form-label small">Alarm Type</label>
+                                        <select class="form-select form-select-sm" name="audio_type">
+                                            <option value="beep">Beep Alarm</option>
+                                            <option value="siren">Siren</option>
+                                            <option value="chime">Chime</option>
+                                        </select>
+                                        <label class="form-label small mt-2">Duration (seconds)</label>
+                                        <input type="number" class="form-control form-control-sm" 
+                                               name="audio_duration" value="10" min="1" max="60">
+                                    </div>
+                                </div>
+
+                                <!-- LoRaWAN Downlink -->
+                                <div class="col-md-12 mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input action-toggle" type="checkbox" 
+                                               id="enableLoRaWAN" name="actions[]" value="lorawan">
+                                        <label class="form-check-label" for="enableLoRaWAN">
+                                            <i class="fas fa-satellite-dish text-danger me-2"></i>
+                                            <strong>LoRaWAN Downlink Command</strong>
+                                        </label>
+                                    </div>
+                                    <div class="ms-4 mt-2 action-config" id="lorawanConfig" style="display: none;">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label small">Command Type</label>
+                                                <select class="form-select form-select-sm" name="lorawan_command">
+                                                    <option value="reset">Reset Device</option>
+                                                    <option value="interval">Change Reporting Interval</option>
+                                                    <option value="threshold">Update Threshold</option>
+                                                    <option value="custom">Custom Command</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small">Payload</label>
+                                                <input type="text" class="form-control form-control-sm" 
+                                                       name="lorawan_payload" placeholder="e.g., 01020304">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Settings -->
+                    <div class="accordion mb-3" id="advancedSettings">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingAdvanced">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapseAdvanced">
+                                    <i class="fas fa-cog me-2"></i>Advanced Settings
+                                </button>
+                            </h2>
+                            <div id="collapseAdvanced" class="accordion-collapse collapse" 
+                                 data-bs-parent="#advancedSettings">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Severity Level</label>
+                                            <select class="form-select" name="severity">
+                                                <option value="info">Info</option>
+                                                <option value="warning" selected>Warning</option>
+                                                <option value="critical">Critical</option>
+                                                <option value="emergency">Emergency</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Enable Rule</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="enabled" id="ruleEnabled" checked>
+                                                <label class="form-check-label" for="ruleEnabled">
+                                                    Enable immediately after creation
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Custom Tags</label>
+                                        <input type="text" class="form-control" 
+                                               name="tags" placeholder="critical,temperature,monitoring">
+                                        <div class="form-text">Comma-separated tags for filtering</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Create Rule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Rule Modal -->
+<div class="modal fade" id="editRuleModal" tabindex="-1" aria-labelledby="editRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <form id="editRuleForm" method="POST">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" id="editRuleId" name="rule_id">
+                
+                <div class="modal-body">
+                    <!-- Edit form content will be loaded dynamically -->
+                    <div id="editRuleContent" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading rule data...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Test Rule Modal -->
+<div class="modal fade" id="testRuleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Test Alert Rule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="testResult"></div>
+                <div class="text-center mt-3">
+                    <div class="spinner-border text-primary" role="status" id="testSpinner" style="display: none;">
+                        <span class="visually-hidden">Testing...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSRF Token for AJAX -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/rules.js') }}"></script>
+<script>
+// Additional template-specific JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Custom SMS message toggle
+    const customSMS = document.getElementById('customSMSMessage');
+    if (customSMS) {
+        customSMS.addEventListener('change', function() {
+            const customText = document.querySelector('textarea[name="sms_custom_text"]');
+            if (customText) {
+                customText.style.display = this.checked ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+{% endblock %}

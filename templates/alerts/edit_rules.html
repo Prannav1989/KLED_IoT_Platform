@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Edit Alert Rule{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-primary">
+            <i class="fas fa-edit me-2"></i>Edit Alert Rule
+        </h3>
+        <a href="{{ url_for('alerts.rules') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <form method="POST"
+                  action="{{ url_for('alerts.get_rule_api', rule_id=rule.id) }}">
+
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <!-- ================= BASIC ================= -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Rule Name *</label>
+                        <input type="text"
+                               class="form-control"
+                               name="name"
+                               value="{{ rule.name }}"
+                               required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text"
+                               class="form-control"
+                               name="description"
+                               value="{{ rule.description }}">
+                    </div>
+                </div>
+
+                <!-- ================= CONDITION ================= -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        Condition
+                    </div>
+                    <div class="card-body">
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label>Operator</label>
+                                <select class="form-select" name="operator">
+                                    <option value=">"  {% if rule.operator == ">" %}selected{% endif %}>></option>
+                                    <option value="<"  {% if rule.operator == "<" %}selected{% endif %}><</option>
+                                    <option value=">=" {% if rule.operator == ">=" %}selected{% endif %}>>=</option>
+                                    <option value="<=" {% if rule.operator == "<=" %}selected{% endif %}><=</option>
+                                    <option value="==" {% if rule.operator == "==" %}selected{% endif %}>==</option>
+                                    <option value="!=" {% if rule.operator == "!=" %}selected{% endif %}>!=</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label>Threshold</label>
+                                <input type="number"
+                                       step="any"
+                                       class="form-control"
+                                       name="threshold"
+                                       value="{{ rule.threshold }}">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label>Cooldown (sec)</label>
+                                <input type="number"
+                                       class="form-control"
+                                       name="cooldown_seconds"
+                                       value="{{ rule.cooldown_seconds }}">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ================= ACTIONS ================= -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        Alert Actions
+                    </div>
+                    <div class="card-body">
+
+                        {% set action_types = rule.action_types | fromjson if rule.action_types else [] %}
+                        {% set action_config = rule.action | fromjson if rule.action else {} %}
+
+                        <!-- EMAIL -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input action-toggle"
+                                       type="checkbox"
+                                       name="actions[]"
+                                       value="email"
+                                       id="editEmail"
+                                       {% if 'email' in action_types %}checked{% endif %}>
+                                <label class="form-check-label" for="editEmail">
+                                    Email Notification
+                                </label>
+                            </div>
+
+                            <div class="mt-2 action-config"
+                                 id="emailConfig"
+                                 {% if 'email' not in action_types %}style="display:none"{% endif %}>
+
+                                <label class="small">Recipients</label>
+                                <select class="form-select form-select-sm"
+                                        name="email_recipients[]"
+                                        multiple>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}"
+                                            {% if action_config.email and user.id in action_config.email.recipients %}
+                                                selected
+                                            {% endif %}>
+                                            {{ user.name }} ({{ user.email }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- SMS -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input action-toggle"
+                                       type="checkbox"
+                                       name="actions[]"
+                                       value="sms"
+                                       id="editSMS"
+                                       {% if 'sms' in action_types %}checked{% endif %}>
+                                <label class="form-check-label" for="editSMS">
+                                    SMS Notification
+                                </label>
+                            </div>
+
+                            <div class="mt-2 action-config"
+                                 id="smsConfig"
+                                 {% if 'sms' not in action_types %}style="display:none"{% endif %}>
+
+                                <label class="small">Phone Numbers</label>
+                                <select class="form-select form-select-sm"
+                                        name="sms_phone_ids[]"
+                                        multiple>
+                                    {% for phone in phone_numbers %}
+                                        <option value="{{ phone.id }}"
+                                            {% if action_config.sms and phone.id in action_config.sms.phone_ids %}
+                                                selected
+                                            {% endif %}>
+                                            {{ phone.phone_number }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- WEB -->
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="actions[]"
+                                   value="web"
+                                   {% if 'web' in action_types %}checked{% endif %}>
+                            <label class="form-check-label">
+                                Web Notification
+                            </label>
+                        </div>
+
+                        <!-- AUDIO -->
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="actions[]"
+                                   value="audio"
+                                   {% if 'audio' in action_types %}checked{% endif %}>
+                            <label class="form-check-label">
+                                Audio Alarm
+                            </label>
+                        </div>
+
+                        <!-- LORAWAN -->
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="actions[]"
+                                   value="lorawan"
+                                   {% if 'lorawan' in action_types %}checked{% endif %}>
+                            <label class="form-check-label">
+                                LoRaWAN Command
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ================= ENABLE ================= -->
+                <div class="form-check mb-4">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="enabled"
+                           {% if rule.enabled %}checked{% endif %}>
+                    <label class="form-check-label">
+                        Enable Rule
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

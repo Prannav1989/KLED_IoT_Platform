@@ -1,0 +1,44 @@
+I have a Flask + Flask-SocketIO (threading mode) application that must be packaged
+into a Windows EXE using PyInstaller.
+
+Project details:
+- Python version: 3.11
+- Platform: Windows
+- Entry file: run_app.py
+- Flask-SocketIO must use ONLY threading (no eventlet, no gevent)
+- SocketIO is initialized ONLY once in extensions.py
+- PyInstaller must include:
+  - templates/ folder
+  - static/ folder
+  - data/ folder (SQLite DB)
+- The EXE must work without console (noconsole)
+- Auto-detection of async backends MUST be disabled
+- PyInstaller must include:
+  --hidden-import engineio.async_drivers.threading
+  --hidden-import dotenv
+  --hidden-import dotenv.main
+- Output EXE name: KLED_IoT_Platform_V1.1.0.exe
+- The EXE must be stable and production-ready
+
+Please:
+1. Verify code structure for SocketIO + PyInstaller safety
+2. Provide the FINAL PyInstaller command
+3. Explain what NOT to do (common mistakes)
+
+
+
+
+
+pyinstaller ^
+--onefile ^
+--noconsole ^
+--name KLED_IoT_Platform_V1.1.0 ^
+--add-data "templates;templates" ^
+--add-data "static;static" ^
+--add-data "data;data" ^
+--hidden-import engineio.async_drivers.threading ^
+--hidden-import dotenv ^
+--hidden-import dotenv.main ^
+--collect-all flask_socketio ^
+--collect-all flask ^
+run_app.py

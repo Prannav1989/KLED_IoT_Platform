@@ -1,0 +1,66 @@
+{% extends "admin/base.html" %}
+
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Edit MQTT Configuration: {{ config.name }}</h2>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label">Configuration Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ config.name }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="broker_url" class="form-label">Broker URL</label>
+                        <input type="text" class="form-control" id="broker_url" name="broker_url" value="{{ config.broker_url }}" required>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="port" class="form-label">Port</label>
+                        <input type="number" class="form-control" id="port" name="port" value="{{ config.port }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="username" class="form-label">Username (optional)</label>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ config.username if config.username else '' }}">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">Password (leave blank to keep current)</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password to change">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check mt-4 pt-2">
+                            <input type="checkbox" class="form-check-input" id="ssl_enabled" name="ssl_enabled" {% if config.ssl_enabled %}checked{% endif %}>
+                            <label class="form-check-label" for="ssl_enabled">Enable SSL</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Update Configuration</button>
+                <a href="{{ url_for('admin.mqtt_configs') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+    <div class="text-center">
+
+        <div class="mb-4">
+            <i class="fas fa-tools fa-4x text-primary"></i>
+        </div>
+
+        <h2 class="fw-bold mb-2">Admin Dashboard</h2>
+        <h5 class="text-muted mb-3">Coming Soon</h5>
+
+        <p class="text-muted mb-4" style="max-width: 500px; margin: auto;">
+            We’re currently working on this section to bring you powerful insights,
+            device analytics, and management tools.
+            Stay tuned — exciting updates are on the way 🚀
+        </p>
+
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('dashboard.dashboard_list') }}" class="btn btn-primary">
+                <i class="fas fa-chart-line me-1"></i> Go to IoT Dashboards
+            </a>
+            <a href="{{ url_for('admin.manage_devices') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-microchip me-1"></i> Manage Devices
+            </a>
+        </div>
+
+        <div class="mt-5 text-muted small">
+            <i class="fas fa-clock me-1"></i>
+            Last updated: {{ current_user.last_login.strftime('%d %b %Y') if current_user.last_login else 'Recently' }}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

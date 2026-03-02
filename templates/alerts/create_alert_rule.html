@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+{% block title %}Create Alert Rule{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header with sticky actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4 sticky-header bg-white p-3 rounded shadow-sm" style="top: 0; z-index: 100;">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">
+                <i class="fas fa-bell text-primary me-2"></i>Create Alert Rule
+            </h1>
+            <p class="text-muted mb-0">Configure intelligent real-time alerts</p>
+        </div>
+        <div>
+            <a href="{{ url_for('alerts.rules') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-times me-2"></i>Cancel
+            </a>
+            <button type="submit" form="alertRuleForm" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Create Rule
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress indicator -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="step-indicator flex-grow-1">
+                    <div class="d-flex justify-content-between position-relative">
+                        <div class="step active" data-step="1">
+                            <span class="step-circle">1</span>
+                            <span class="step-label">Device</span>
+                        </div>
+                        <div class="step" data-step="2">
+                            <span class="step-circle">2</span>
+                            <span class="step-label">Parameter</span>
+                        </div>
+                        <div class="step" data-step="3">
+                            <span class="step-circle">3</span>
+                            <span class="step-label">Condition</span>
+                        </div>
+                        <div class="step" data-step="4">
+                            <span class="step-circle">4</span>
+                            <span class="step-label">Actions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form id="alertRuleForm" method="POST" action="{{ url_for('alerts.create_rule') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Main content in cards -->
+        <div class="row">
+            <!-- Left column - Configuration -->
+            <div class="col-lg-8">
+                <!-- BASIC INFO - Compact -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="m-0 fw-bold text-primary">
+                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Rule Name *</label>
+                                <input type="text" class="form-control" name="name" placeholder="e.g., High Temperature Alert" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Description</label>
+                                <input type="text" class="form-control" name="description" placeholder="Brief description of this rule">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DEVICE SELECTION - Grid view with search -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold text-primary">
+                            <i class="fas fa-microchip me-2"></i>Select Device
+                        </h6>
+                        <div class="col-4">
+                            <input type="text" class="form-control form-control-sm" id="deviceSearch" placeholder="Search devices...">
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2" id="deviceList">
+                            {% for d in devices_data %}
+                            <div class="col-md-4 col-sm-6 device-item" data-name="{{ d.name|lower }}">
+                                <div class="form-check border rounded p-2 device-option">
+                                    <input class="form-check-input device-select"
+                                           type="radio"
+                                           name="device_id"
+                                           value="{{ d.id }}"
+                                           id="device{{ d.id }}"
+                                           data-params='{{ d.parameters | tojson | safe }}'
+                                           required>
+                                    <label class="form-check-label d-flex align-items-center" for="device{{ d.id }}">
+                                        <i class="fas fa-cube text-secondary me-2"></i>
+                                        <span class="fw-semibold">{{ d.name }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PARAMETER & CONDITION - Combined compact card -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="m-0 fw-bold text-primary">
+                            <i class="fas fa-sliders-h me-2"></i>Condition Configuration
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Parameter Selection -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Parameter *</label>
+                                <select class="form-select" name="parameter_id" id="parameterSelect" required disabled>
+                                    <option value="">Select device first</option>
+                                </select>
+                                <div class="form-text text-muted small mt-1">
+                                    <i class="fas fa-info-circle me-1"></i>Choose the metric to monitor
+                                </div>
+                            </div>
+
+                            <!-- Operator & Threshold -->
+                            <div class="col-md-6">
+                                <div class="row g-2">
+                                    <div class="col-5">
+                                        <label class="form-label fw-semibold">Operator</label>
+                                        <select class="form-select" name="operator" required>
+                                            <option value=">">Greater Than (>)</option>
+                                            <option value="<">Less Than (<)</option>
+                                            <option value=">=">Greater or Equal (≥)</option>
+                                            <option value="<=">Less or Equal (≤)</option>
+                                            <option value="==">Equals (=)</option>
+                                            <option value="!=">Not Equal (≠)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-7">
+                                        <label class="form-label fw-semibold">Threshold</label>
+                                        <div class="input-group">
+                                            <input type="number" step="any" name="threshold" class="form-control" placeholder="Value" required>
+                                            <span class="input-group-text" id="unitDisplay"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cooldown -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Cooldown Period</label>
+                                <div class="input-group">
+                                    <input type="number" name="cooldown_seconds" class="form-control" value="300" min="0" step="60">
+                                    <span class="input-group-text">seconds</span>
+                                </div>
+                                <div class="form-text text-muted small">Time between repeated alerts</div>
+                            </div>
+
+                            <!-- Quick presets -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Quick Presets</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary preset-btn" data-op=">" data-val="25">Critical High</button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning preset-btn" data-op="<" data-val="10">Critical Low</button>
+                                    <button type="button" class="btn btn-sm btn-outline-info preset-btn" data-op="==" data-val="0">Zero Value</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right column - Actions & Preview (Sticky) -->
+            <div class="col-lg-4">
+                <!-- Live Preview Card (Sticky) -->
+                <div class="card shadow mb-4 sticky-top" style="top: 80px; z-index: 90;">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h6 class="m-0 fw-bold">
+                            <i class="fas fa-eye me-2"></i>Live Preview
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="rulePreview" class="preview-box p-3 bg-light rounded text-center">
+                            <i class="fas fa-magic fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0 small">Configure rule to see preview...</p>
+                        </div>
+                        
+                        <!-- Quick summary when configured -->
+                        <div id="ruleSummary" class="mt-3 small" style="display: none;">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span class="fw-semibold">Rule will trigger when:</span>
+                            </div>
+                            <div class="alert alert-info mb-0 py-2" id="previewText"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTIONS - Compact card with toggles -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="m-0 fw-bold text-primary">
+                            <i class="fas fa-bolt me-2"></i>Alert Actions
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Action selection as compact toggles -->
+                        <div class="action-grid">
+                            <!-- Email -->
+                            <div class="action-item mb-3 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-envelope text-primary me-2" style="width: 20px;"></i>
+                                        <span class="fw-semibold">Email</span>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input action-toggle" 
+                                               type="checkbox" 
+                                               id="enableEmail"
+                                               name="actions[]" 
+                                               value="email"
+                                               {{ 'disabled' if not users }}>
+                                    </div>
+                                </div>
+                                {% if users %}
+                                <div class="action-config mt-2" id="emailConfig" style="display: none;">
+                                    <select class="form-select form-select-sm" name="email_recipients[]" multiple size="2">
+                                        {% for user in users %}
+                                        <option value="{{ user.email }}">{{ user.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- SMS -->
+                            <div class="action-item mb-3 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-sms text-success me-2" style="width: 20px;"></i>
+                                        <span class="fw-semibold">SMS</span>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input action-toggle" 
+                                               type="checkbox" 
+                                               id="enableSMS"
+                                               name="actions[]" 
+                                               value="sms"
+                                               {{ 'disabled' if not phone_numbers }}>
+                                    </div>
+                                </div>
+                                {% if phone_numbers %}
+                                <div class="action-config mt-2" id="smsConfig" style="display: none;">
+<select name="sms_phone_ids[]" multiple>
+    {% for phone in phone_numbers %}
+        <option value="{{ phone.id }}">
+            {{ phone.recipient_name }} - {{ phone.phone_number }}
+        </option>
+    {% endfor %}
+</select>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Web (always enabled) -->
+                            <div class="action-item mb-3 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-globe text-info me-2" style="width: 20px;"></i>
+                                        <span class="fw-semibold">Web</span>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               name="actions[]" 
+                                               value="web" 
+                                               checked>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Audio -->
+                            <div class="action-item mb-2 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-volume-up text-warning me-2" style="width: 20px;"></i>
+                                        <span class="fw-semibold">Audio</span>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input action-toggle" 
+                                               type="checkbox" 
+                                               id="enableAudio"
+                                               name="actions[]" 
+                                               value="audio">
+                                    </div>
+                                </div>
+                                <div class="action-config mt-2" id="audioConfig" style="display: none;">
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" name="audio_duration" class="form-control" value="10" min="1" max="60">
+                                        <span class="input-group-text">seconds</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action warning -->
+                        <div id="actionWarning" class="alert alert-warning py-2 small mt-3" style="display: none;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Please select at least one alert action
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Tips -->
+                <div class="card shadow bg-light">
+                    <div class="card-body py-3">
+                        <h6 class="fw-semibold mb-2">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>Quick Tips
+                        </h6>
+                        <ul class="small text-muted ps-3 mb-0">
+                            <li>Use cooldown to prevent alert flooding</li>
+                            <li>Multiple recipients can be selected for email/SMS</li>
+                            <li>Web notifications are always enabled</li>
+                            <li>Test your rule after creation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+.step-indicator {
+    position: relative;
+    padding: 0 20px;
+}
+
+.step {
+    text-align: center;
+    flex: 1;
+    position: relative;
+}
+
+.step:not(:last-child):before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    right: -50%;
+    width: 100%;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 1;
+}
+
+.step.active:not(:last-child):before {
+    background: #4e73df;
+}
+
+.step-circle {
+    width: 30px;
+    height: 30px;
+    background: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 5px;
+    font-weight: bold;
+    position: relative;
+    z-index: 2;
+}
+
+.step.active .step-circle {
+    background: #4e73df;
+    color: white;
+}
+
+.step-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.step.active .step-label {
+    color: #4e73df;
+    font-weight: 600;
+}
+
+.preview-box {
+    min-height: 100px;
+    transition: all 0.3s ease;
+}
+
+.device-option {
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.device-option:hover {
+    background-color: #f8f9fc;
+    border-color: #4e73df !important;
+}
+
+.device-option input:checked + label {
+    color: #4e73df;
+    font-weight: 600;
+}
+
+.action-item {
+    transition: all 0.2s;
+}
+
+.action-item:hover {
+    background-color: #f8f9fc;
+}
+
+.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+
+@media (max-width: 992px) {
+    .sticky-top {
+        position: relative;
+        top: 0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Device search functionality
+    const deviceSearch = document.getElementById('deviceSearch');
+    if (deviceSearch) {
+        deviceSearch.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('.device-item').forEach(item => {
+                const name = item.dataset.name;
+                if (name.includes(searchTerm) || searchTerm === '') {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Device selection
+    const deviceRadios = document.querySelectorAll('.device-select');
+    const parameterSection = document.getElementById('parameterSelect');
+    const parameterSelect = document.getElementById('parameterSelect');
+    const unitDisplay = document.getElementById('unitDisplay');
+
+    deviceRadios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            const params = JSON.parse(this.dataset.params || "[]");
+            parameterSelect.innerHTML = '<option value="">Choose parameter</option>';
+            parameterSelect.disabled = false;
+
+            params.forEach(p => {
+                const opt = document.createElement("option");
+                opt.value = p.id;
+                opt.textContent = p.name;
+                if (p.unit) {
+                    opt.dataset.unit = p.unit;
+                }
+                parameterSelect.appendChild(opt);
+            });
+
+            // Update step indicator
+            updateStep(2);
+        });
+    });
+
+    // Parameter selection
+    parameterSelect.addEventListener('change', function() {
+        const selected = this.options[this.selectedIndex];
+        if (selected && selected.dataset.unit) {
+            unitDisplay.textContent = selected.dataset.unit;
+        } else {
+            unitDisplay.textContent = '';
+        }
+        updateStep(3);
+        updatePreview();
+    });
+
+    // Preset buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const op = this.dataset.op;
+            const val = this.dataset.val;
+            document.querySelector('select[name="operator"]').value = op;
+            document.querySelector('input[name="threshold"]').value = val;
+            updatePreview();
+        });
+    });
+
+    // Toggle action configs
+    document.querySelectorAll('.action-toggle').forEach(toggle => {
+        const configId = toggle.id.replace('enable', '').toLowerCase() + 'Config';
+        const config = document.getElementById(configId);
+
+        if (config) {
+            toggle.addEventListener('change', function() {
+                config.style.display = this.checked ? 'block' : 'none';
+                updateStep(4);
+            });
+        }
+    });
+
+    // Live Preview update
+    function updatePreview() {
+        const device = document.querySelector('input[name="device_id"]:checked');
+        const parameter = parameterSelect;
+        const operator = document.querySelector('select[name="operator"]').value;
+        const threshold = document.querySelector('input[name="threshold"]').value;
+        const preview = document.getElementById('rulePreview');
+        const summary = document.getElementById('ruleSummary');
+        const previewText = document.getElementById('previewText');
+
+        if (device && parameter.value && threshold) {
+            const deviceName = device.nextElementSibling.querySelector('span').textContent;
+            const paramName = parameter.options[parameter.selectedIndex].text;
+            const unit = parameter.options[parameter.selectedIndex].dataset.unit || '';
+            
+            preview.innerHTML = `
+                <div class="alert alert-success mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Ready!</strong> Rule configured
+                </div>
+            `;
+            
+            summary.style.display = 'block';
+            previewText.innerHTML = `
+                <strong>${deviceName}</strong> → 
+                <strong>${paramName}</strong> 
+                ${operator} <strong>${threshold}${unit}</strong>
+            `;
+        } else {
+            preview.innerHTML = `
+                <i class="fas fa-magic fa-2x text-muted mb-2"></i>
+                <p class="text-muted mb-0 small">Configure rule to see preview...</p>
+            `;
+            summary.style.display = 'none';
+        }
+    }
+
+    // Step indicator update
+    function updateStep(step) {
+        document.querySelectorAll('.step').forEach(s => {
+            if (parseInt(s.dataset.step) <= step) {
+                s.classList.add('active');
+            } else {
+                s.classList.remove('active');
+            }
+        });
+    }
+
+    // Event listeners for preview
+    document.querySelectorAll('input[name="device_id"], #parameterSelect, select[name="operator"], input[name="threshold"]').forEach(el => {
+        el.addEventListener('change', updatePreview);
+        el.addEventListener('input', updatePreview);
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const actionsChecked = document.querySelectorAll('input[name="actions[]"]:checked').length;
+        if (actionsChecked === 0) {
+            e.preventDefault();
+            document.getElementById('actionWarning').style.display = 'block';
+            
+            // Scroll to actions
+            document.querySelector('.action-grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    // Initialize step 1 as active
+    updateStep(1);
+});
+</script>
+{% endblock %}

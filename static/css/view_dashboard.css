@@ -1,0 +1,421 @@
+/* -------------------------
+   Dashboard Global Layout
+--------------------------*/
+
+/* Dashboard Summary Cards (Top section) */
+.card.border-left-primary,
+.card.border-left-success,
+.card.border-left-info,
+.card.border-left-warning {
+    border-left-width: 6px;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card.border-left-primary:hover,
+.card.border-left-success:hover,
+.card.border-left-info:hover,
+.card.border-left-warning:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.card .text-xs {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.card .h5 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+body {
+  background-color: #f8f9fc;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+/* Card defaults */
+.card {
+  border-radius: 0.75rem;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+/* Card header */
+.card-header {
+  background: #fff;
+  border-bottom: 1px solid #e3e6f0;
+  font-weight: 600;
+  color: #4e73df;
+}
+
+/* -------------------------
+   Stats Cards
+--------------------------*/
+.border-left-primary {
+  border-left: 0.4rem solid #4e73df !important;
+}
+.border-left-success {
+  border-left: 0.4rem solid #1cc88a !important;
+}
+.border-left-info {
+  border-left: 0.4rem solid #36b9cc !important;
+}
+.border-left-warning {
+  border-left: 0.4rem solid #f6c23e !important;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+.text-gray-800 {
+  color: #5a5c69 !important;
+}
+
+/* -------------------------
+   Device Cards
+--------------------------*/
+.device-card {
+  min-height: 250px;
+}
+
+.badge-success {
+  background-color: #1bc537;
+}
+.badge-secondary {
+  background-color: #020f0e;
+}
+
+/* -------------------------
+   Responsive Parameters Grid
+--------------------------*/
+
+/* Parameter Cards Layout */
+.parameter-card {
+    background: #f8f9fa;
+    transition: all 0.2s ease;
+    border-radius: 0.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem 0.75rem;
+    border: 1px solid #e3e6f0;
+}
+
+.parameter-card:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.parameter-icon {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.parameter-icon i {
+    font-size: 1.5rem;
+    color: #4e73df;
+}
+
+.parameter-label {
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.parameter-value {
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+}
+
+.parameter-unit {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Responsive grid adjustments */
+.readings-container .row {
+    margin: -0.5rem;
+}
+
+.readings-container .row > div {
+    padding: 0.5rem;
+}
+
+/* For devices with many parameters - scrollable container */
+.parameters-scrollable {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.parameters-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.parameters-scrollable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.parameters-scrollable::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.parameters-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Compact layout option (alternative) */
+.compact-parameters-grid {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.compact-parameter-item {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    border-left: 3px solid #4e73df;
+    transition: all 0.2s ease;
+}
+
+.compact-parameter-item:hover {
+    background: #e9ecef;
+    transform: translateX(2px);
+}
+
+.compact-icon {
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.compact-icon i {
+    color: #4e73df;
+    font-size: 1.1rem;
+}
+
+.compact-label {
+    font-size: 0.85rem;
+    color: #495057;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.compact-value {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #2c3e50;
+    line-height: 1.2;
+}
+
+/* -------------------------
+   No Data Message
+--------------------------*/
+.no-data-message {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+.no-data-message i {
+    font-size: 2.5rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.no-data-message p {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+/* -------------------------
+   Responsive Adjustments
+--------------------------*/
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) {
+    .compact-parameters-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .parameter-card {
+        padding: 1.25rem 0.75rem;
+    }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+    .compact-parameters-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .parameter-value {
+        font-size: 1.3rem;
+    }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .compact-parameters-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .parameter-value {
+        font-size: 1.4rem;
+    }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .compact-parameters-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 575.98px) {
+    .readings-container .row > div {
+        padding: 0.375rem;
+    }
+    
+    .parameter-card {
+        padding: 0.875rem 0.5rem;
+    }
+    
+    .parameter-icon {
+        height: 35px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .parameter-icon i {
+        font-size: 1.25rem;
+    }
+    
+    .parameter-label {
+        font-size: 0.8rem;
+    }
+    
+    .parameter-value {
+        font-size: 1.1rem;
+    }
+    
+    .compact-parameters-grid {
+        gap: 0.375rem;
+    }
+    
+    .compact-parameter-item {
+        padding: 0.625rem;
+    }
+}
+
+/* Extra small devices (portrait phones, less than 576px) */
+@media (max-width: 767.98px) {
+    .device-card {
+        min-height: 200px;
+    }
+}
+
+/* Animation for value updates */
+@keyframes highlightUpdate {
+    0% {
+        background-color: rgba(78, 115, 223, 0.15);
+        box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.3);
+    }
+    100% {
+        background-color: #f8f9fa;
+        box-shadow: none;
+    }
+}
+
+.parameter-value-updated {
+    animation: highlightUpdate 1s ease;
+}
+
+/* Status indicators */
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.status-active {
+    background-color: #1cc88a;
+    box-shadow: 0 0 0 2px rgba(28, 200, 138, 0.3);
+}
+
+.status-inactive {
+    background-color: #858796;
+    box-shadow: 0 0 0 2px rgba(133, 135, 150, 0.3);
+}
+
+.status-error {
+    background-color: #e74a3b;
+    box-shadow: 0 0 0 2px rgba(231, 74, 59, 0.3);
+}
+
+/* Card footer styling */
+.card-footer {
+    background-color: rgba(248, 249, 250, 0.8);
+    border-top: 1px solid #e3e6f0;
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Loading state */
+.parameter-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.parameter-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.6) 50%, 
+        transparent 100%);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
